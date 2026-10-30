@@ -16,6 +16,9 @@ export type VideoRow = {
   status: string;
   enviado_em: string;
   erro_motivo: string | null;
+  // JSON com os quadros (data URLs) que o coach olhou, para o aluno ver
+  // exatamente quais momentos geraram cada comentario.
+  quadros: string | null;
 };
 
 export type AnaliseRow = {
@@ -87,8 +90,8 @@ rotasVideos.post('/novo', async (c) => {
   }
 
   const inserido = await c.env.DB
-    .prepare('INSERT INTO videos (user_id, r2_key, titulo, status) VALUES (?, ?, ?, ?)')
-    .bind(user!.id, 'so-quadros', titulo, 'processando')
+    .prepare('INSERT INTO videos (user_id, r2_key, titulo, status, quadros) VALUES (?, ?, ?, ?, ?)')
+    .bind(user!.id, 'so-quadros', titulo, 'processando', JSON.stringify(quadros))
     .run();
   const videoId = inserido.meta.last_row_id as number;
 

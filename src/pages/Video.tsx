@@ -29,6 +29,13 @@ const CSS_VIDEO = `
 .aguarde .bola{width:42px;height:42px;margin:0 auto 14px;border-radius:50%;border:4px solid var(--quadra-clara);border-top-color:var(--quadra);animation:gira 1s linear infinite}
 @keyframes gira{to{transform:rotate(360deg)}}
 .acoes{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:26px}
+.momentos{margin-top:24px;text-align:left}
+.momentos h3{font-size:1rem;margin-bottom:4px}
+.momentos p{margin:0 0 10px;font-size:.86rem;color:var(--cinza)}
+.tira{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.quadro{margin:0;border-radius:12px;overflow:hidden;border:1px solid var(--borda);background:#000}
+.quadro img{display:block;width:100%;height:auto}
+.quadro figcaption{background:#fff;color:var(--quadra-esc);font-size:.76rem;font-weight:800;text-align:center;padding:5px 4px}
 `;
 
 function parseLista(json: string | null): string[] {
@@ -36,6 +43,20 @@ function parseLista(json: string | null): string[] {
   try {
     const v = JSON.parse(json);
     return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+// Os quadros vem como JSON de data URLs. Um valor invalido nao derruba a
+// pagina: a tira de momentos simplesmente nao aparece.
+function parseQuadros(json: string | null): string[] {
+  if (!json) return [];
+  try {
+    const v = JSON.parse(json);
+    return Array.isArray(v)
+      ? v.filter((x): x is string => typeof x === 'string' && x.startsWith('data:image/'))
+      : [];
   } catch {
     return [];
   }
@@ -72,6 +93,7 @@ export function PaginaVideo({
 }) {
   const fortes = parseLista(analise?.pontos_fortes ?? null);
   const melhorar = parseLista(analise?.pontos_melhorar ?? null);
+  const quadros = parseQuadros(video.quadros);
   const processando = video.status === 'processando';
   const nota = analise?.nota_geral ?? 0;
   const humor: Humor = analise ? (nota >= 7 ? 'feliz' : nota >= 5 ? 'neutro' : 'triste') : processando ? 'analisando' : 'triste';
@@ -101,6 +123,21 @@ export function PaginaVideo({
               </div>
             </div>
             <p class="resumo">{analise.resumo}</p>
+
+            {quadros.length > 0 ? (
+              <div class="momentos">
+                <h3>Os momentos do seu treino que o coach olhou</h3>
+                <p>Cada comentario abaixo se refere a um destes momentos.</p>
+                <div class="tira">
+                  {quadros.map((q, i) => (
+                    <figure class="quadro">
+                      <img src={q} alt={`Momento ${i + 1} do seu treino`} loading="lazy" />
+                      <figcaption>Momento {i + 1}</figcaption>
+                    </figure>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             <div class="card bloco">
               <h3><span class="marca" /> Pontos fortes</h3>
