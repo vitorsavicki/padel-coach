@@ -1,19 +1,64 @@
-// Mascote do coach: uma bola de padel com bone. Serve para o aluno saber o
-// que esta acontecendo (humor "analisando") e para reagir ao resultado.
-// SVG inline: nenhuma imagem externa, funciona offline e no dark mode.
+// Mascote do coach: uma bola de padel com bone.
+//
+// Movimento de verdade, nao so "cara de animado": o corpo salta e inclina,
+// a raquete bate para os dois lados, a bolinha quica ao lado e os olhos
+// acompanham. Tudo em SVG inline, sem imagem externa.
 
 export type Humor = 'feliz' | 'analisando' | 'triste' | 'neutro';
 
 const CSS_MASCOTE = `
 .mascote{display:inline-block;line-height:0}
-.mascote svg{overflow:visible;filter:drop-shadow(0 10px 16px rgba(10,31,26,.14))}
-.mascote[data-humor="analisando"] svg{animation:masc-pula 1.5s ease-in-out infinite}
-.mascote[data-humor="feliz"] svg{animation:masc-pula 2.8s ease-in-out infinite}
-.mascote .olho-branco{animation:masc-pisca 4.2s ease-in-out infinite}
-@keyframes masc-pula{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-@keyframes masc-pisca{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.mascote svg{overflow:visible;filter:drop-shadow(0 10px 16px rgba(10,31,26,.16));transform-origin:50% 90%;animation:masc-salta 1.7s ease-in-out infinite}
+.mascote .raquete{transform-box:fill-box;transform-origin:50% 100%;animation:masc-bate .85s ease-in-out infinite}
+.mascote .bolinha{animation:masc-quica 1.05s cubic-bezier(.45,0,.55,1) infinite}
+.mascote .olhos{transform-box:fill-box;transform-origin:50% 50%;animation:masc-pisca 3.4s ease-in-out infinite}
+.mascote .pupila{animation:masc-olha 2.4s ease-in-out infinite}
+.mascote .bone{transform-box:fill-box;transform-origin:50% 100%;animation:masc-bone 1.7s ease-in-out infinite}
+
+.mascote[data-humor="feliz"] svg{animation-duration:1.05s}
+.mascote[data-humor="feliz"] .raquete{animation-duration:.6s}
+
+.mascote[data-humor="analisando"] svg{animation-duration:1.25s}
+.mascote[data-humor="analisando"] .raquete{animation-duration:.55s}
+.mascote[data-humor="analisando"] .bolinha{animation-duration:.8s}
+
+.mascote[data-humor="triste"] svg{animation:none;transform:translateY(5px) rotate(-3deg)}
+.mascote[data-humor="triste"] .raquete{animation:none;transform:rotate(-34deg);opacity:.55}
+.mascote[data-humor="triste"] .bolinha{animation:none;opacity:0}
+.mascote[data-humor="triste"] .pupila{animation:none}
+
+@keyframes masc-salta{
+  0%,100%{transform:translateY(0) rotate(0)}
+  22%{transform:translateY(-14px) rotate(-6deg)}
+  45%{transform:translateY(0) rotate(0)}
+  68%{transform:translateY(-7px) rotate(4deg)}
+}
+@keyframes masc-bate{
+  0%,100%{transform:rotate(-30deg)}
+  50%{transform:rotate(26deg)}
+}
+@keyframes masc-quica{
+  0%,100%{transform:translate(0,0)}
+  45%{transform:translate(12px,-24px)}
+  60%{transform:translate(16px,-8px)}
+}
+@keyframes masc-pisca{
+  0%,90%,100%{transform:scaleY(1)}
+  94%{transform:scaleY(.12)}
+}
+@keyframes masc-olha{
+  0%,100%{transform:translateX(0)}
+  28%{transform:translateX(2.6px)}
+  64%{transform:translateX(-2.6px)}
+}
+@keyframes masc-bone{
+  0%,100%{transform:translateY(0) rotate(0)}
+  22%{transform:translateY(-2px) rotate(-4deg)}
+  68%{transform:translateY(-1px) rotate(3deg)}
+}
+
 @media (prefers-reduced-motion: reduce){
-  .mascote svg,.mascote .olho-branco{animation:none !important}
+  .mascote svg,.mascote .raquete,.mascote .bolinha,.mascote .olhos,.mascote .pupila,.mascote .bone{animation:none !important}
 }
 `;
 
@@ -21,56 +66,63 @@ export function Mascote({ humor = 'neutro', size = 104 }: { humor?: Humor; size?
   return (
     <span class="mascote" data-humor={humor}>
       <style>{CSS_MASCOTE}</style>
-      <svg width={size} height={size} viewBox="0 0 110 110" role="img" aria-label="Mascote do Padel Coach">
-        {/* bola */}
-        <circle cx="55" cy="60" r="36" fill="#d9f24a" stroke="#0f766e" stroke-width="3" />
-        <path d="M27 38c13 4 22 14 25 31" fill="none" stroke="#0f766e" stroke-width="2.2" stroke-linecap="round" opacity=".5" />
-        <path d="M83 38c-13 4-22 14-25 31" fill="none" stroke="#0f766e" stroke-width="2.2" stroke-linecap="round" opacity=".5" />
+      <svg width={size} height={size} viewBox="0 0 120 120" role="img"
+        aria-label="Mascote do Padel Coach, uma bola de padel de bone com raquete">
+        {/* bolinha quicando ao lado */}
+        <circle class="bolinha" cx="14" cy="86" r="6.5" fill="#d9f24a" stroke="#0f766e" stroke-width="2" />
+
+        {/* corpo: bola */}
+        <circle cx="60" cy="64" r="34" fill="#d9f24a" stroke="#0f766e" stroke-width="3" />
+        <path d="M34 44c12 4 21 13 24 29" fill="none" stroke="#0f766e" stroke-width="2" stroke-linecap="round" opacity=".45" />
+        <path d="M86 44c-12 4-21 13-24 29" fill="none" stroke="#0f766e" stroke-width="2" stroke-linecap="round" opacity=".45" />
 
         {/* bone */}
-        <path d="M30 30c5-13 45-13 50 0" fill="#0f766e" />
-        <path d="M25 31h60" stroke="#0a4f4a" stroke-width="6" stroke-linecap="round" />
+        <g class="bone">
+          <path d="M38 34c5-14 39-14 44 0" fill="#0f766e" />
+          <path d="M32 35h56" stroke="#0a4f4a" stroke-width="7" stroke-linecap="round" />
+        </g>
 
         {/* olhos */}
-        {humor === 'feliz' ? (
-          <>
-            <path d="M40 58c3-5 8-5 11 0" fill="none" stroke="#0a4f4a" stroke-width="3" stroke-linecap="round" />
-            <path d="M59 58c3-5 8-5 11 0" fill="none" stroke="#0a4f4a" stroke-width="3" stroke-linecap="round" />
-          </>
-        ) : humor === 'triste' ? (
-          <>
-            <path d="M39 54l12 5" fill="none" stroke="#0a4f4a" stroke-width="2.6" stroke-linecap="round" />
-            <path d="M71 54l-12 5" fill="none" stroke="#0a4f4a" stroke-width="2.6" stroke-linecap="round" />
-            <circle cx="46" cy="64" r="3.4" fill="#0a4f4a" />
-            <circle cx="64" cy="64" r="3.4" fill="#0a4f4a" />
-          </>
-        ) : (
-          <>
-            <circle class="olho-branco" cx="46" cy="60" r="5" fill="#fff" stroke="#0a4f4a" stroke-width="2" />
-            <circle class="olho-branco" cx="64" cy="60" r="5" fill="#fff" stroke="#0a4f4a" stroke-width="2" />
-            <circle cx={humor === 'analisando' ? 48 : 46} cy="61" r="2.4" fill="#0a4f4a" />
-            <circle cx={humor === 'analisando' ? 66 : 64} cy="61" r="2.4" fill="#0a4f4a" />
-          </>
-        )}
+        <g class="olhos">
+          {humor === 'feliz' ? (
+            <>
+              <path d="M45 62c3-6 9-6 12 0" fill="none" stroke="#0a4f4a" stroke-width="3.2" stroke-linecap="round" />
+              <path d="M63 62c3-6 9-6 12 0" fill="none" stroke="#0a4f4a" stroke-width="3.2" stroke-linecap="round" />
+            </>
+          ) : humor === 'triste' ? (
+            <>
+              <path d="M44 58l13 6" fill="none" stroke="#0a4f4a" stroke-width="2.8" stroke-linecap="round" />
+              <path d="M76 58l-13 6" fill="none" stroke="#0a4f4a" stroke-width="2.8" stroke-linecap="round" />
+              <circle class="pupila" cx="51" cy="69" r="3.4" fill="#0a4f4a" />
+              <circle class="pupila" cx="69" cy="69" r="3.4" fill="#0a4f4a" />
+            </>
+          ) : (
+            <>
+              <circle cx="51" cy="64" r="6" fill="#fff" stroke="#0a4f4a" stroke-width="2.2" />
+              <circle cx="69" cy="64" r="6" fill="#fff" stroke="#0a4f4a" stroke-width="2.2" />
+              <circle class="pupila" cx="52" cy="65" r="2.8" fill="#0a4f4a" />
+              <circle class="pupila" cx="70" cy="65" r="2.8" fill="#0a4f4a" />
+            </>
+          )}
+        </g>
 
         {/* boca */}
         {humor === 'feliz' ? (
-          <path d="M46 74c4 6 14 6 18 0" fill="none" stroke="#0a4f4a" stroke-width="3" stroke-linecap="round" />
+          <path d="M52 80c4 7 14 7 18 0" fill="none" stroke="#0a4f4a" stroke-width="3" stroke-linecap="round" />
         ) : humor === 'triste' ? (
-          <path d="M47 78c4-5 12-5 16 0" fill="none" stroke="#0a4f4a" stroke-width="3" stroke-linecap="round" />
+          <path d="M53 84c4-6 13-6 17 0" fill="none" stroke="#0a4f4a" stroke-width="3" stroke-linecap="round" />
         ) : humor === 'analisando' ? (
-          <ellipse cx="55" cy="76" rx="4.5" ry="5.5" fill="#0a4f4a" />
+          <ellipse cx="61" cy="82" rx="4.6" ry="5.6" fill="#0a4f4a" />
         ) : (
-          <path d="M48 76h14" stroke="#0a4f4a" stroke-width="3" stroke-linecap="round" />
+          <path d="M54 82h14" stroke="#0a4f4a" stroke-width="3" stroke-linecap="round" />
         )}
 
-        {/* raquete ao lado, so no humor de analise e feliz */}
-        {humor === 'analisando' || humor === 'feliz' ? (
-          <g transform="rotate(18 92 78)">
-            <ellipse cx="92" cy="74" rx="9" ry="11" fill="none" stroke="#0a4f4a" stroke-width="3" />
-            <line x1="92" y1="85" x2="92" y2="96" stroke="#0a4f4a" stroke-width="3.4" stroke-linecap="round" />
-          </g>
-        ) : null}
+        {/* raquete batendo */}
+        <g class="raquete">
+          <ellipse cx="96" cy="70" rx="10" ry="12" fill="#fff" stroke="#0a4f4a" stroke-width="3" />
+          <path d="M92 62h8M92 66h8M92 70h8M92 74h8" stroke="#0a4f4a" stroke-width="1" opacity=".35" />
+          <line x1="96" y1="82" x2="96" y2="97" stroke="#0a4f4a" stroke-width="4" stroke-linecap="round" />
+        </g>
       </svg>
     </span>
   );

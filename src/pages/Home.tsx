@@ -26,6 +26,9 @@ ul.feats li::before{content:'';position:absolute;left:0;top:6px;width:9px;height
 .passos{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
 .passos .card{position:relative;padding-top:28px}
 .passos .n{position:absolute;top:-16px;left:22px}
+.recebe{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px}
+.recebe .card{padding-top:20px}
+.recebe .icone{display:inline-flex;width:30px;height:30px;border-radius:9px;background:var(--quadra);color:#fff;font-weight:800;font-size:.85rem;align-items:center;justify-content:center;margin-bottom:10px}
 .rodape-cta{margin-top:52px;background:var(--quadra);color:#fff;border-radius:20px;padding:40px 26px;text-align:center}
 .rodape-cta h2{color:#fff}
 .rodape-cta p{color:#d3ece5;margin:8px auto 22px;max-width:460px}
@@ -153,6 +156,35 @@ export function Home({ user, msg }: { user: User | null; msg?: string }) {
                   <span class="n">3</span>
                   <h3>Volte melhor</h3>
                   <p>Receba nota, pontos fortes, o que corrigir e um treino sob medida. Suas notas sobem com o tempo.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="sec" id="recebe" style="background:#fff;border-top:1px solid var(--borda);border-bottom:1px solid var(--borda)">
+            <div class="wrap">
+              <h2>O que voce recebe depois de enviar</h2>
+              <p class="sub-sec">Um retorno curto e direto, feito para o seu proximo treino.</p>
+              <div class="recebe">
+                <div class="card">
+                  <span class="icone">1</span>
+                  <h3>Nota de 0 a 10</h3>
+                  <p>Com o que puxou a nota para cima e o que puxou para baixo.</p>
+                </div>
+                <div class="card">
+                  <span class="icone">2</span>
+                  <h3>O que voce fez bem</h3>
+                  <p>Tres ou quatro pontos concretos, cada um ligado a um momento do video.</p>
+                </div>
+                <div class="card">
+                  <span class="icone">3</span>
+                  <h3>O que corrigir</h3>
+                  <p>O erro e o que fazer no lugar, na mesma frase. Sem teoria solta.</p>
+                </div>
+                <div class="card">
+                  <span class="icone">4</span>
+                  <h3>Treino da semana</h3>
+                  <p>Um treino pratico, com series e foco, para a sua proxima ida a quadra.</p>
                 </div>
               </div>
             </div>
