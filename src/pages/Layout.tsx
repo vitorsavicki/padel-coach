@@ -79,7 +79,7 @@ const TEXTOS_MSG: Record<string, string> = {
   reenviar: 'Escolha o video de novo para analisar.',
   tamanho: 'Video muito grande. Envie um clipe de ate 14MB (mais ou menos 2 minutos).',
   senha_errada: 'E-mail ou senha incorretos.',
-  saiu: 'Voce saiu. Ate o proximo treino!',
+  saiu: 'Voce saiu da sua conta. Ate a proxima.',
   csrf: 'Sua sessao expirou. Recarregue a pagina e tente de novo.',
   sessao: 'Entre na sua conta para continuar.',
   sem_video: 'Video nao encontrado na sua conta.',

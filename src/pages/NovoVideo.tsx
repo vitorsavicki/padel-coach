@@ -1,5 +1,6 @@
 import type { User } from '../lib/session';
 import { Layout, barraMsg } from './Layout';
+import { MODO_DEMO_LOCAL } from '../ia';
 import { Mascote } from './Mascote';
 
 const CSS_NOVO = `
@@ -7,6 +8,8 @@ const CSS_NOVO = `
 .passo .n{flex:none;width:26px;height:26px;border-radius:50%;background:var(--bola);color:var(--quadra-esc);font-weight:800;display:flex;align-items:center;justify-content:center;font-size:.85rem}
 .dica{background:#eef4f1;border-radius:12px;padding:16px 18px;margin:18px 0 22px;font-size:.93rem;text-align:left;color:#2c4740}
 .dica strong{color:var(--quadra-esc)}
+.demo{background:#eef4fb;border:1px solid #b9d2f0;color:#1c4e8a;border-radius:12px;padding:14px 16px;margin:0 0 20px;font-size:.9rem;text-align:left;line-height:1.5}
+.demo strong{color:#123f6e}
 .limites{background:#fff;border:1px solid var(--borda);border-radius:14px;padding:16px 18px;margin:20px 0 8px;text-align:left}
 .limites h3{font-size:.95rem;margin-bottom:8px;color:var(--quadra-esc)}
 .limites ul{list-style:none;padding:0;margin:0;display:grid;gap:7px}
@@ -169,6 +172,14 @@ export function PaginaNovoVideo({
         </div>
         <p class="sub">Escolha um video do celular. Ele e lido aqui no seu aparelho - o arquivo nao sai de onde esta.</p>
         {barraMsg(msg)}
+
+        {MODO_DEMO_LOCAL ? (
+          <div class="demo">
+            <strong>Modo demonstracao ligado.</strong> A analise monta um exemplo
+            (nota, momentos e treino) sem chamar a IA e sem gastar cota. Serve para
+            voce ver a tela inteira funcionando.
+          </div>
+        ) : null}
 
         <div class="dica">
           <div class="passo"><span class="n">1</span>

@@ -1,5 +1,6 @@
 import type { User } from '../lib/session';
 import { Layout, barraMsg, BolaPadel } from './Layout';
+import { Mascote } from './Mascote';
 
 const CSS_HOME = `
 .hero{position:relative;overflow:hidden;padding:84px 20px 64px;text-align:center;background:radial-gradient(120% 120% at 50% 0%,#d9f5ec 0%,#eef8f3 45%,var(--fundo) 100%)}
@@ -105,9 +106,12 @@ export function Home({ user, msg }: { user: User | null; msg?: string }) {
           <section class="hero">
             <div class="wrap">
               {barraMsg(msg)}
-              <span class="selo-hero"><BolaPadel size={16} /> Analise do seu treino em minutos, direto do celular</span>
+              <div style="display:flex;justify-content:center;margin-bottom:10px">
+                <Mascote humor="feliz" size={96} />
+              </div>
+              <span class="selo-hero"><BolaPadel size={16} /> Analise do seu treino em minutos, de onde voce estiver</span>
               <h1>
-                Seu coach de padel<br />na palma da mao, com <em>inteligencia artificial</em>.
+                Seu coach de padel<br />no seu ritmo, com <em>inteligencia artificial</em>.
               </h1>
               <p>
                 Suba o video do seu treino ou jogo. O coach assiste, da a nota, mostra o que

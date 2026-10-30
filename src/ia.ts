@@ -192,7 +192,9 @@ async function chamarGemini(
   };
   if (!minimal) {
     corpo.systemInstruction = { parts: [{ text: systemPrompt }] };
-    corpo.generationConfig = { temperature: 0.4, responseMimeType: 'application/json' };
+    // temperature 0: o mesmo video deve dar a mesma nota. Com 0.4 a nota
+    // variava 6.0 / 7.2 / 7.5 para o mesmo clipe, o que parece erro do site.
+    corpo.generationConfig = { temperature: 0, responseMimeType: 'application/json' };
   }
 
   const controlador = new AbortController();
