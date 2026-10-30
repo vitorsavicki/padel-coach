@@ -32,12 +32,12 @@ app.get('/painel', async (c) => {
 
   const videos = await c.env.DB
     .prepare(
-      `SELECT v.id, v.titulo, v.status, a.nota_geral AS nota
+      `SELECT v.id, v.titulo, v.status, v.enviado_em, a.nota_geral AS nota
        FROM videos v LEFT JOIN analyses a ON a.video_id = v.id
        WHERE v.user_id = ? ORDER BY v.enviado_em DESC, v.id DESC`,
     )
     .bind(user!.id)
-    .all<{ id: number; titulo: string | null; status: string; nota: number | null }>();
+    .all<{ id: number; titulo: string | null; status: string; enviado_em: string; nota: number | null }>();
 
   const pontos = await c.env.DB
     .prepare(

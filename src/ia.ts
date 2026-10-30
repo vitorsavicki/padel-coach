@@ -121,7 +121,9 @@ async function chamarGemini(
   const url = `${base}/models/${modelo}:generateContent`;
 
   const controlador = new AbortController();
-  const timer = setTimeout(() => controlador.abort(), 60_000);
+  // Video inline demora: 3 minutos antes de desistir. Antes eram 60s e o
+  // abort virava "The operation was aborted" na cara do aluno.
+  const timer = setTimeout(() => controlador.abort(), 180_000);
 
   try {
     const resposta = await fetch(url, {
@@ -171,7 +173,10 @@ export function dicaParaErro(motivo: string): string | null {
   if (m.includes('quota') || m.includes('429') || m.includes('resource_exhausted')) {
     return 'A cota gratuita do Gemini acabou por hoje. Tente de novo amanha ou use outra chave.';
   }
-  if (m.includes('abort') || m.includes('rede') || m.includes('network') || m.includes('fetch')) {
+  if (m.includes('abort')) {
+    return 'O Google demorou mais de 3 minutos para responder. Envie um clipe de 30 a 60 segundos - o coach ja consegue avaliar bem.';
+  }
+  if (m.includes('rede') || m.includes('network') || m.includes('fetch')) {
     return 'A conexao com o Google caiu antes da resposta. Tente de novo com um clipe menor.';
   }
   return null;
