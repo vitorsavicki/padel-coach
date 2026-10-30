@@ -31,9 +31,52 @@ export class IaFalha extends Error {
   }
 }
 
+// Modelo de visao do Workers AI. Aceita imagem e segue instrucao em ingles
+// com mais firmeza que o llava; o prompt continua em PT-BR e funciona.
+const MODELO_VISAO = '@cf/meta/llama-3.2-11b-vision-instruct';
+
+// Analise pelo Workers AI: manda ate 3 quadros e pede o JSON do coach.
+// Modelos de visao pequenos nao aceitam varias imagens de forma uniforme,
+// entao tentamos o array e caimos para o primeiro quadro se a API recusar.
+async function analisarComWorkersAi(
+  env: Bindings,
+  quadros: string[],
+  systemPrompt: string,
+): Promise<AnaliseCoach> {
+  if (!env.AI) throw new IaFalha(0, 'binding AI ausente');
+
+  const base64 = quadros.slice(0, 3).map((q) => q.slice(q.indexOf(',') + 1));
+  const prompt = `${systemPrompt}\n\nResponda SOMENTE com o JSON, sem texto fora dele.`;
+
+  let resposta: unknown;
+  try {
+    resposta = await env.AI.run(MODELO_VISAO as never, {
+      image: base64,
+      prompt,
+      max_tokens: 1200,
+    } as never);
+  } catch {
+    resposta = await env.AI.run(MODELO_VISAO as never, {
+      image: base64[0],
+      prompt,
+      max_tokens: 1200,
+    } as never);
+  }
+
+  const obj = resposta as { response?: string; description?: string } | string;
+  const texto =
+    typeof obj === 'string' ? obj : (obj?.response ?? obj?.description ?? '');
+
+  const json = extrairJSON(texto);
+  if (!json) {
+    throw new IaFalha(0, `Workers AI respondeu sem JSON: ${String(texto).slice(0, 140)}`);
+  }
+  return normalizar(json);
+}
+
 export function iaConfigurada(env: Bindings): boolean {
   // Em demonstracao a analise nao chama API, entao nao exige chave.
-  return MODO_DEMO_LOCAL || Boolean(env.IA_API_KEY && env.IA_MODEL);
+  return MODO_DEMO_LOCAL || Boolean(env.AI) || Boolean(env.IA_API_KEY && env.IA_MODEL);
 }
 
 // Os quadros chegam como data URL ("data:image/jpeg;base64,...").
@@ -75,7 +118,7 @@ type Tentativa =
 // um exemplo pronto. Serve para validar a tela inteira (momentos, nota,
 // pontos, treino) enquanto a cota do provedor esta esgotada.
 // Trocar para false volta a chamar o Gemini, sem mexer em mais nada.
-export const MODO_DEMO_LOCAL = true;
+export const MODO_DEMO_LOCAL = false;
 
 function analiseDemo(quantos: number): AnaliseCoach {
   const n = Math.max(1, Math.min(quantos, 6));
@@ -108,6 +151,16 @@ export async function analisarQuadros(
   systemPrompt: string,
 ): Promise<AnaliseCoach> {
   if (MODO_DEMO_LOCAL) return analiseDemo(quadros.length);
+
+  // Workers AI primeiro: mesma conta, sem chave, cota separada do Gemini.
+  if (env.AI) {
+    try {
+      return await analisarComWorkersAi(env, quadros, systemPrompt);
+    } catch (e) {
+      // Se falhar e houver chave do Gemini, ainda vale tentar o Gemini.
+      if (!env.IA_API_KEY || !env.IA_MODEL) throw e;
+    }
+  }
 
   if (!env.IA_API_KEY || !env.IA_MODEL) {
     throw new IaFalha(0, 'IA nao configurada (falta IA_API_KEY ou IA_MODEL)');

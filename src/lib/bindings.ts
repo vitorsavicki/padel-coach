@@ -9,6 +9,8 @@ export type Bindings = {
   IA_BASE_URL?: string;
   IA_API_KEY?: string;
   IA_MODEL?: string;
+  // Workers AI: roda na mesma conta, sem chave e sem cartao.
+  AI?: Ai;
   // Mercado Pago: sem o token, /planos mostra "pagamento em breve".
   MP_ACCESS_TOKEN?: string;
 };

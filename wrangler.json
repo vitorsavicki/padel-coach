@@ -11,6 +11,7 @@
     }
   ],
   "r2_buckets": [],
+  "ai": { "binding": "AI" },
   "vars": {
     "APP_NAME": "Padel Coach IA"
   }
