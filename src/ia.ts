@@ -78,6 +78,12 @@ export async function analisarQuadros(
       r = await chamarGemini(env, modelo, partes, systemPrompt);
     }
 
+    // Abortou (status 0) com muitos quadros: tenta de novo com 3, que ja
+    // mostram o gesto e respondem bem mais rapido.
+    if (!r.ok && r.status === 0 && partes.length > 3) {
+      r = await chamarGemini(env, modelo, partes.slice(0, 3), systemPrompt);
+    }
+
     if (r.ok) {
       const json = extrairJSON(r.texto);
       if (!json) throw new IaFalha(0, 'Gemini respondeu sem JSON valido');
@@ -88,7 +94,10 @@ export async function analisarQuadros(
     if (r.status !== 404 && r.status !== 503) break;
   }
 
-  throw new IaFalha(ultima?.status ?? 0, ultima?.erro ?? 'falha desconhecida');
+  throw new IaFalha(
+    ultima?.status ?? 0,
+    `${ultima?.erro ?? 'falha desconhecida'} [modelo: ${pedido}]`,
+  );
 }
 
 async function chamarGemini(
@@ -156,7 +165,7 @@ export function dicaParaErro(motivo: string): string | null {
     return 'O servico do Google esta sobrecarregado agora. Tente de novo em alguns minutos.';
   }
   if (m.includes('524') || m.includes('timeout') || m.includes('abort')) {
-    return 'A analise demorou demais. Tente de novo com um clipe mais curto (30 a 60 segundos).';
+    return 'O coach demorou mais que o normal para responder. Tente de novo - se repetir, envie um clipe de ate 1 minuto.';
   }
   if (m.includes('invalid_argument') || m.includes('400')) {
     return 'Nao consegui ler os quadros deste video. Tente enviar em mp4 ou mov.';
