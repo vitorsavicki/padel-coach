@@ -198,6 +198,50 @@ function normalizarModelo(nome: string): string {
   return semPrefixo.trim();
 }
 
+export type DiagnosticoIa = {
+  ok: boolean;
+  modelo: string;
+  status: number;
+  ms: number;
+  detalhe: string;
+};
+
+// Testa a conexao com o Google SEM enviar video. Isola o provedor do fluxo:
+// se isto falhar, o problema e chave/modelo, nunca o video do aluno.
+export async function diagnosticarIa(env: Bindings): Promise<DiagnosticoIa> {
+  const modelo = env.IA_MODEL ? normalizarModelo(env.IA_MODEL) : '(nao definido)';
+  if (!env.IA_API_KEY || !env.IA_MODEL) {
+    return { ok: false, modelo, status: 0, ms: 0, detalhe: 'falta IA_API_KEY ou IA_MODEL' };
+  }
+
+  const base = baseGemini(env.IA_BASE_URL);
+  const inicio = Date.now();
+  const controlador = new AbortController();
+  const timer = setTimeout(() => controlador.abort(), 15_000);
+
+  try {
+    const r = await fetch(`${base}/models/${modelo}`, {
+      signal: controlador.signal,
+      headers: { 'x-goog-api-key': env.IA_API_KEY as string },
+    });
+    const ms = Date.now() - inicio;
+    const texto = await r.text();
+    return {
+      ok: r.ok,
+      modelo,
+      status: r.status,
+      ms,
+      detalhe: r.ok ? 'modelo disponivel para esta chave' : limparErro(texto),
+    };
+  } catch (e) {
+    const ms = Date.now() - inicio;
+    const msg = e instanceof Error ? e.message : 'falha de rede';
+    return { ok: false, modelo, status: 0, ms, detalhe: msg.slice(0, 160) };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function esperar(ms: number): Promise<void> {
   return new Promise((res) => setTimeout(res, ms));
 }

@@ -110,6 +110,28 @@ const SCRIPT = `
       dizer('Nao consegui ler esse video. Tente outro arquivo mp4 ou mov.');
     });
   };
+
+  var diag=document.getElementById('diag');
+  if(diag){
+    diag.onclick=function(){
+      if(palco){palco.className='palco on';}
+      humor('analisando');marcar(0);progresso(25);
+      dizer('Testando a conexao com o coach...');
+      fetch('/saude/ia',{credentials:'same-origin'}).then(function(r){return r.json();}).then(function(j){
+        progresso(100);
+        if(j&&j.ok){
+          humor('feliz');marcar(3);
+          dizer('Conexao ok: '+j.modelo+' respondeu em '+j.ms+' ms. Pode enviar seu video.');
+        }else{
+          humor('triste');marcar(1);
+          dizer('A IA nao respondeu: '+((j&&j.detalhe)||'erro')+' (modelo: '+((j&&j.modelo)||'?')+')');
+        }
+      }).catch(function(){
+        humor('triste');
+        dizer('Nao consegui falar com o servidor.');
+      });
+    };
+  }
 })();
 `;
 
@@ -169,6 +191,10 @@ export function PaginaNovoVideo({
             {iaAtiva ? 'Analisar meu treino' : 'Analise em finalizacao'}
           </button>
         </form>
+
+        <button class="btn btn-sec btn-largo" id="diag" type="button" style="margin-top:10px">
+          Testar a conexao com a IA
+        </button>
 
         <div class="palco" id="palco">
           <span id="masc"><Mascote humor="analisando" size={92} /></span>

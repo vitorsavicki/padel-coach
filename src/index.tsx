@@ -9,6 +9,7 @@ import { Home } from './pages/Home';
 import { Dashboard } from './pages/Dashboard';
 import { PaginaPrivacidade } from './pages/Privacidade';
 import { PaginaExemplo } from './pages/Exemplo';
+import { diagnosticarIa } from './ia';
 
 export type { Bindings } from './lib/bindings';
 
@@ -18,6 +19,13 @@ app.use('*', middlewareSessao);
 app.use('*', protecaoOrigem);
 
 app.get('/saude', (c) => c.json({ ok: true, app: c.env.APP_NAME }));
+
+// Diagnostico da IA: responde em segundos se a chave e o modelo funcionam.
+// Exige login para nao expor configuracao do projeto.
+app.get('/saude/ia', async (c) => {
+  if (!c.get('user')) return c.json({ ok: false, detalhe: 'entre na sua conta' }, 401);
+  return c.json(await diagnosticarIa(c.env));
+});
 
 app.get('/', (c) => c.html(<Home user={c.get('user')} msg={c.req.query('msg')} />));
 
