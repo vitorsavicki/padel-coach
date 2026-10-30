@@ -1,0 +1,5 @@
+IA_BASE_URL=http://localhost:20128/v1
+IA_API_KEY=chave-do-omniroute-ou-openrouter
+IA_MODEL=gemini/gemini-2.0-flash
+MP_ACCESS_TOKEN=token-do-mercado-pago
+SESSION_SECRET=troque-por-uma-string-longa-aleatoria

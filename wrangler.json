@@ -1,0 +1,13 @@
+{
+  "name": "padel-coach",
+  "main": "src/index.tsx",
+  "compatibility_date": "2025-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    { "binding": "DB", "database_name": "padel_coach_db", "database_id": "PREENCHER-saida-do-wrangler-d1-create" }
+  ],
+  "r2_buckets": [
+    { "binding": "VIDEOS", "bucket_name": "padel-videos" }
+  ],
+  "vars": { "APP_NAME": "Padel Coach IA" }
+}
