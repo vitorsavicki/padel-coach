@@ -143,7 +143,7 @@ rotasVideos.get('/:id', async (c) => {
   if (!Number.isInteger(id)) return c.notFound();
 
   const video = await c.env.DB
-    .prepare('SELECT id, titulo, status, enviado_em, erro_motivo FROM videos WHERE id = ? AND user_id = ?')
+    .prepare('SELECT id, titulo, status, enviado_em, erro_motivo, quadros FROM videos WHERE id = ? AND user_id = ?')
     .bind(id, user!.id)
     .first<VideoRow>();
   if (!video) return c.redirect('/painel?msg=sem_video');
