@@ -10,7 +10,7 @@ const CSS_DASH = `
 .painel-topo h1{font-size:1.9rem;letter-spacing:-.02em;margin:0 0 4px}
 .painel-topo p{margin:0;color:var(--cinza);font-size:.98rem}
 
-.resumo{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:26px}
+.resumo{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px}
 .bloco-num{background:#fff;border:1px solid var(--borda);border-radius:16px;padding:18px 16px;position:relative;overflow:hidden;box-shadow:var(--sombra-1)}
 .bloco-num::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--quadra)}
 .bloco-num .rotulo{display:block;font-size:.72rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7d938c;margin-bottom:6px}
@@ -93,11 +93,13 @@ export function Dashboard({
   user,
   videos,
   pontos,
+  usadas,
   msg,
 }: {
   user: User;
   videos: VideoItem[];
   pontos: PontoEvolucao[];
+  usadas?: number;
   msg?: string;
 }) {
   const analisados = videos.filter((v) => v.nota !== null).length;
@@ -123,6 +125,10 @@ export function Dashboard({
           <div class="bloco-num">
             <span class="rotulo">Analisados</span>
             <span class="valor">{analisados}</span>
+          </div>
+          <div class="bloco-num">
+            <span class="rotulo">Analises</span>
+            <span class="valor">{usadas ?? 0}</span>
           </div>
           <div class="bloco-num">
             <span class="rotulo">Nota media</span>

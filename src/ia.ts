@@ -350,9 +350,20 @@ export async function diagnosticarIa(env: Bindings): Promise<DiagnosticoIa> {
   const timer = setTimeout(() => controlador.abort(), 15_000);
 
   try {
-    const r = await fetch(`${base}/models/${modelo}`, {
+    // Geracao real de 1 token. O GET /models responde 200 mesmo para modelo
+    // aposentado - foi por isso que este botao dizia "conexao ok" para o
+    // gemini-2.0-flash, que devolve 404 ao gerar.
+    const r = await fetch(`${base}/models/${modelo}:generateContent`, {
+      method: 'POST',
       signal: controlador.signal,
-      headers: { 'x-goog-api-key': env.IA_API_KEY as string },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': env.IA_API_KEY as string,
+      },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: 'Responda apenas: ok' }] }],
+        generationConfig: { temperature: 0, maxOutputTokens: 8 },
+      }),
     });
     const ms = Date.now() - inicio;
     const texto = await r.text();
@@ -361,7 +372,7 @@ export async function diagnosticarIa(env: Bindings): Promise<DiagnosticoIa> {
       modelo,
       status: r.status,
       ms,
-      detalhe: r.ok ? 'modelo disponivel para esta chave' : limparErro(texto),
+      detalhe: r.ok ? 'modelo respondeu a uma geracao de teste' : limparErro(texto),
     };
   } catch (e) {
     const ms = Date.now() - inicio;

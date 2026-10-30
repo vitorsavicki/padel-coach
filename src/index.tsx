@@ -70,11 +70,18 @@ app.get('/painel', async (c) => {
     .bind(user!.id)
     .all<{ nota: number; quando: string }>();
 
+  // Numero de analises do cliente, para mostrar no painel.
+  const uso = await c.env.DB
+    .prepare('SELECT COUNT(*) AS n FROM analyses WHERE user_id = ?')
+    .bind(user!.id)
+    .first<{ n: number }>();
+
   return c.html(
     <Dashboard
       user={user!}
       videos={videos.results ?? []}
       pontos={(pontos.results ?? []).map((p) => ({ rotulo: p.quando, nota: p.nota }))}
+      usadas={uso?.n ?? 0}
       msg={c.req.query('msg')}
     />,
   );
