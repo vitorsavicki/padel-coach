@@ -1,0 +1,189 @@
+import type { User } from '../lib/session';
+import { Layout, barraMsg, BolaPadel } from './Layout';
+
+const CSS_HOME = `
+.hero{position:relative;overflow:hidden;padding:72px 20px 56px;text-align:center;background:linear-gradient(180deg,#eaf7f1 0%,var(--fundo) 100%)}
+.hero .wrap{position:relative;z-index:1}
+.hero h1{font-size:clamp(1.9rem,4.6vw,3rem);line-height:1.1;letter-spacing:-.03em;margin-bottom:16px}
+.hero h1 em{color:var(--quadra);font-style:normal;position:relative;white-space:nowrap}
+.hero h1 em::after{content:'';position:absolute;left:0;right:0;bottom:.06em;height:.28em;background:var(--bola);border-radius:3px;z-index:-1}
+.hero p{font-size:1.1rem;color:var(--cinza);max-width:600px;margin:0 auto 28px}
+.hero .acoes{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.quadra{max-width:640px;margin:40px auto 0}
+.preco{font-size:2rem;font-weight:800;margin:6px 0 2px;letter-spacing:-.02em}
+.preco small{font-size:.85rem;color:var(--cinza);font-weight:500}
+.card.destaque{border:2px solid var(--quadra);position:relative}
+.tag{position:absolute;top:-12px;left:22px;background:var(--bola);color:var(--quadra-esc);font-size:.72rem;font-weight:800;letter-spacing:.04em;padding:4px 11px;border-radius:999px;text-transform:uppercase}
+ul.feats{list-style:none;padding:0;margin:14px 0 20px;display:grid;gap:6px}
+ul.feats li{padding-left:22px;position:relative;color:#2c4740;font-size:.93rem}
+ul.feats li::before{content:'';position:absolute;left:0;top:6px;width:9px;height:9px;border-radius:50%;background:var(--bola);box-shadow:0 0 0 2px rgba(15,118,110,.25)}
+.embreve{display:block;text-align:center;padding:11px;border-radius:10px;background:#eef4f1;color:#5b716b;font-weight:600;font-size:.9rem}
+.passos{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
+.passos .card{position:relative;padding-top:28px}
+.passos .n{position:absolute;top:-16px;left:22px}
+.rodape-cta{margin-top:52px;background:var(--quadra);color:#fff;border-radius:20px;padding:40px 26px;text-align:center}
+.rodape-cta h2{color:#fff}
+.rodape-cta p{color:#d3ece5;margin:8px auto 22px;max-width:460px}
+.rodape-cta .btn-pri{background:var(--bola);color:var(--quadra-esc)}
+.prova{display:flex;gap:26px;justify-content:center;flex-wrap:wrap;margin-top:26px;color:var(--cinza);font-size:.88rem}
+.prova strong{color:var(--quadra-esc)}
+`;
+
+// Ilustracao da quadra de padel, em SVG inline (sem imagem externa).
+function Quadra() {
+  return (
+    <div class="quadra">
+      <svg viewBox="0 0 640 300" width="100%" role="img" aria-label="Quadra de padel com jogadores e bola">
+        <defs>
+          <linearGradient id="piso" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#19a08f" />
+            <stop offset="1" stop-color="#0f766e" />
+          </linearGradient>
+        </defs>
+        <rect x="60" y="40" width="520" height="220" rx="10" fill="url(#piso)" />
+        <rect x="60" y="40" width="520" height="220" rx="10" fill="none" stroke="#0a4f4a" stroke-width="3" />
+        <line x1="320" y1="40" x2="320" y2="260" stroke="#e9fbf5" stroke-width="2" opacity=".75" />
+        <line x1="60" y1="150" x2="580" y2="150" stroke="#e9fbf5" stroke-width="2" opacity=".55" />
+        <line x1="190" y1="150" x2="450" y2="150" stroke="#e9fbf5" stroke-width="3" opacity=".9" />
+        <line x1="60" y1="105" x2="60" y2="195" stroke="#e9fbf5" stroke-width="2" opacity=".55" />
+        <line x1="580" y1="105" x2="580" y2="195" stroke="#e9fbf5" stroke-width="2" opacity=".55" />
+        <g fill="#0a4f4a" opacity=".9">
+          <circle cx="150" cy="120" r="9" />
+          <rect x="146" y="130" width="8" height="26" rx="4" />
+          <circle cx="485" cy="185" r="9" />
+          <rect x="481" y="195" width="8" height="26" rx="4" />
+        </g>
+        <g stroke="#0a4f4a" stroke-width="3" stroke-linecap="round">
+          <line x1="167" y1="126" x2="186" y2="112" />
+          <line x1="464" y1="192" x2="447" y2="207" />
+        </g>
+        <ellipse cx="336" cy="96" rx="15" ry="15" fill="#d9f24a" stroke="#0a4f4a" stroke-width="1.6" />
+        <path d="M327 88c5 2 8 6 9 12" fill="none" stroke="#0a4f4a" stroke-width="1.2" />
+        <path d="M345 88c-5 2-8 6-9 12" fill="none" stroke="#0a4f4a" stroke-width="1.2" />
+      </svg>
+    </div>
+  );
+}
+
+const PLANOS = [
+  {
+    nome: 'Gratis',
+    preco: 'R$ 0',
+    periodo: '',
+    feats: ['2 analises por mes', 'Nota e feedback do coach', 'Treino sugerido da semana'],
+    destaque: false,
+  },
+  {
+    nome: 'Atleta',
+    preco: 'R$ 19,90',
+    periodo: '/mes',
+    feats: ['20 analises por mes', 'Historico e evolucao das notas', 'Tudo do plano Gratis'],
+    destaque: true,
+  },
+  {
+    nome: 'Pro',
+    preco: 'R$ 39,90',
+    periodo: '/mes',
+    feats: ['Analises ilimitadas', 'Prioridade na fila de analise', 'Tudo do plano Atleta'],
+    destaque: false,
+  },
+];
+
+export function Home({ user, msg }: { user: User | null; msg?: string }) {
+  return (
+    <Layout
+      titulo="Padel Coach IA - seu coach de padel com inteligencia artificial"
+      descricao="Suba o video do seu treino de padel e receba analise, nota e plano de evolucao. Comece gratis."
+      user={user}
+      cssExtra={CSS_HOME}
+      corpo={
+        <>
+          <section class="hero">
+            <div class="wrap">
+              {barraMsg(msg)}
+              <h1>
+                Seu coach de padel<br />na palma da mao, com <em>inteligencia artificial</em>.
+              </h1>
+              <p>
+                Suba o video do seu treino ou jogo. O coach assiste, da a nota, mostra o que
+                melhorar e monta o treino da sua semana. Voce ve sua evolucao a cada video.
+              </p>
+              <div class="acoes">
+                {user ? (
+                  <a class="btn btn-pri" href="/painel">Ver meu painel</a>
+                ) : (
+                  <a class="btn btn-pri" href="/cadastro">Comecar gratis</a>
+                )}
+                <a class="btn btn-sec" href="#como">Como funciona</a>
+              </div>
+              <div class="prova">
+                <span><strong>2 min</strong> de video ja vale uma analise</span>
+                <span><strong>Nota de 0 a 10</strong> a cada treino</span>
+                <span><strong>Treino</strong> pronto para a semana</span>
+              </div>
+              <Quadra />
+            </div>
+          </section>
+
+          <section class="sec" id="como">
+            <div class="wrap">
+              <h2>Como funciona</h2>
+              <p class="sub-sec">Tres passos, do celular para a quadra.</p>
+              <div class="passos">
+                <div class="card">
+                  <span class="n">1</span>
+                  <h3>Grave e envie</h3>
+                  <p>Filme um treino ou um jogo pelo celular e mande pelo site. Clipes de ate 2 minutos ja bastam.</p>
+                </div>
+                <div class="card">
+                  <span class="n">2</span>
+                  <h3>O coach analisa</h3>
+                  <p>Tecnica, posicionamento e decisao de jogo avaliados como um treinador faria na beira da quadra.</p>
+                </div>
+                <div class="card">
+                  <span class="n">3</span>
+                  <h3>Volte melhor</h3>
+                  <p>Receba nota, pontos fortes, o que corrigir e um treino sob medida. Suas notas sobem com o tempo.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="sec" id="planos">
+            <div class="wrap">
+              <h2>Planos para cada momento</h2>
+              <p class="sub-sec">Comece gratis. Pague so se quiser analisar mais.</p>
+              <div class="grid">
+                {PLANOS.map((p) => (
+                  <div class={p.destaque ? 'card destaque' : 'card'}>
+                    {p.destaque ? <span class="tag">Mais escolhido</span> : null}
+                    <h3>{p.nome}</h3>
+                    <div class="preco">{p.preco}<small>{p.periodo}</small></div>
+                    <ul class="feats">
+                      {p.feats.map((f) => <li>{f}</li>)}
+                    </ul>
+                    <span class="embreve">Pagamento em breve</span>
+                  </div>
+                ))}
+              </div>
+              <p style="text-align:center;color:var(--cinza);margin-top:22px;font-size:.9rem">
+                Pagamento por PIX ou cartao, via Mercado Pago. Cancele quando quiser.
+              </p>
+            </div>
+          </section>
+
+          <section class="wrap">
+            <div class="rodape-cta">
+              <BolaPadel size={30} />
+              <h2>Pronto para o proximo treino?</h2>
+              <p>Crie sua conta gratis e mande o primeiro video. O coach responde em minutos.</p>
+              <a class="btn btn-pri" href={user ? '/videos/novo' : '/cadastro'}>
+                {user ? 'Enviar video' : 'Criar conta gratis'}
+              </a>
+            </div>
+          </section>
+        </>
+      }
+    />
+  );
+}
