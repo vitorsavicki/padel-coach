@@ -2,9 +2,11 @@ import type { User } from '../lib/session';
 import { Layout, barraMsg, BolaPadel } from './Layout';
 
 const CSS_HOME = `
-.hero{position:relative;overflow:hidden;padding:72px 20px 56px;text-align:center;background:linear-gradient(180deg,#eaf7f1 0%,var(--fundo) 100%)}
+.hero{position:relative;overflow:hidden;padding:84px 20px 64px;text-align:center;background:radial-gradient(120% 120% at 50% 0%,#d9f5ec 0%,#eef8f3 45%,var(--fundo) 100%)}
+.hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(15,118,110,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(15,118,110,.07) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(70% 60% at 50% 30%,#000 30%,transparent 100%);-webkit-mask-image:radial-gradient(70% 60% at 50% 30%,#000 30%,transparent 100%);pointer-events:none}
 .hero .wrap{position:relative;z-index:1}
-.hero h1{font-size:clamp(1.9rem,4.6vw,3rem);line-height:1.1;letter-spacing:-.03em;margin-bottom:16px}
+.hero h1{font-size:clamp(2.1rem,5.4vw,3.6rem);line-height:1.05;letter-spacing:-.035em;margin-bottom:18px;font-weight:800}
+.hero .selo-hero{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--borda);border-radius:999px;padding:6px 14px;font-size:.82rem;font-weight:700;color:var(--quadra-esc);margin-bottom:20px;box-shadow:0 1px 2px rgba(10,31,26,.05)}
 .hero h1 em{color:var(--quadra);font-style:normal;position:relative;white-space:nowrap}
 .hero h1 em::after{content:'';position:absolute;left:0;right:0;bottom:.06em;height:.28em;background:var(--bola);border-radius:3px;z-index:-1}
 .hero p{font-size:1.1rem;color:var(--cinza);max-width:600px;margin:0 auto 28px}
@@ -12,7 +14,9 @@ const CSS_HOME = `
 .quadra{max-width:640px;margin:40px auto 0}
 .preco{font-size:2rem;font-weight:800;margin:6px 0 2px;letter-spacing:-.02em}
 .preco small{font-size:.85rem;color:var(--cinza);font-weight:500}
-.card.destaque{border:2px solid var(--quadra);position:relative}
+.card.destaque{border:2px solid var(--quadra);position:relative;box-shadow:0 18px 40px -24px rgba(15,118,110,.55);transform:translateY(-4px)}
+.grid .card{transition:transform .18s ease,box-shadow .18s ease}
+.grid .card:hover{transform:translateY(-3px);box-shadow:0 14px 30px -22px rgba(10,31,26,.45)}
 .tag{position:absolute;top:-12px;left:22px;background:var(--bola);color:var(--quadra-esc);font-size:.72rem;font-weight:800;letter-spacing:.04em;padding:4px 11px;border-radius:999px;text-transform:uppercase}
 ul.feats{list-style:none;padding:0;margin:14px 0 20px;display:grid;gap:6px}
 ul.feats li{padding-left:22px;position:relative;color:#2c4740;font-size:.93rem}
@@ -101,6 +105,7 @@ export function Home({ user, msg }: { user: User | null; msg?: string }) {
           <section class="hero">
             <div class="wrap">
               {barraMsg(msg)}
+              <span class="selo-hero"><BolaPadel size={16} /> Analise de treino com IA - sem instalar nada</span>
               <h1>
                 Seu coach de padel<br />na palma da mao, com <em>inteligencia artificial</em>.
               </h1>

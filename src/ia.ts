@@ -1,5 +1,9 @@
-// Analise de video com IA multimodal. O modelo precisa entender video
-// nativamente (Gemini via endpoint compativel com chat/completions).
+// Analise de video com Gemini, SEM armazenamento e SEM cartao.
+//
+// O video chega pelo form, vai para o Gemini como inline_data (base64),
+// a analise volta e o arquivo e descartado. Nada de R2, nada de bucket.
+// Usa o endpoint NATIVO do Gemini (generateContent), porque video em
+// base64 so funciona por ali - o endpoint OpenAI-compatible nao aceita.
 
 import type { Bindings } from './lib/bindings';
 
@@ -11,63 +15,71 @@ export type AnaliseCoach = {
   treino_sugerido: string;
 };
 
-const LIMITE_BYTES = 20 * 1024 * 1024; // MVP: 20MB
+// 20MB de video = ~27MB em base64, dentro do limite de corpo do Worker.
+export const LIMITE_BYTES = 20 * 1024 * 1024;
 
 export function iaConfigurada(env: Bindings): boolean {
-  return Boolean(env.IA_BASE_URL && env.IA_API_KEY && env.IA_MODEL && env.VIDEOS);
+  return Boolean(env.IA_API_KEY && env.IA_MODEL);
 }
 
-export async function analisarVideo(
+export async function analisarBytes(
   env: Bindings,
-  r2Key: string,
+  bytes: Uint8Array,
+  mime: string,
   systemPrompt: string,
 ): Promise<AnaliseCoach> {
-  if (!env.VIDEOS) throw new Error('Armazenamento de video nao configurado');
-  if (!env.IA_BASE_URL || !env.IA_API_KEY || !env.IA_MODEL) {
-    throw new Error('IA nao configurada');
+  if (!env.IA_API_KEY || !env.IA_MODEL) throw new Error('IA nao configurada');
+  if (bytes.byteLength === 0) throw new Error('Arquivo vazio');
+  if (bytes.byteLength > LIMITE_BYTES) throw new Error('Video grande demais');
+
+  const base = env.IA_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta';
+  const url = `${base}/models/${env.IA_MODEL}:generateContent`;
+
+  const controlador = new AbortController();
+  const timer = setTimeout(() => controlador.abort(), 120_000);
+
+  let resposta: Response;
+  try {
+    resposta = await fetch(url, {
+      method: 'POST',
+      signal: controlador.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': env.IA_API_KEY,
+      },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { text: 'Analise este video de padel do aluno.' },
+              { inline_data: { mime_type: mime, data: bytesToBase64(bytes) } },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.4,
+          responseMimeType: 'application/json',
+        },
+      }),
+    });
+  } finally {
+    clearTimeout(timer);
   }
 
-  const objeto = await env.VIDEOS.get(r2Key);
-  if (!objeto) throw new Error('Video nao encontrado');
-
-  const bytes = new Uint8Array(await objeto.arrayBuffer());
-  if (bytes.byteLength > LIMITE_BYTES) throw new Error('Video muito grande para analise');
-
-  const base64 = bytesToBase64(bytes);
-
-  const resposta = await fetch(`${env.IA_BASE_URL}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${env.IA_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: env.IA_MODEL,
-      temperature: 0.4,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: 'Analise este video de padel do aluno.' },
-            { type: 'video_url', video_url: { url: `data:video/mp4;base64,${base64}` } },
-          ],
-        },
-      ],
-    }),
-  });
-
   if (!resposta.ok) {
-    throw new Error(`IA respondeu ${resposta.status}`);
+    throw new Error(`Gemini respondeu ${resposta.status}`);
   }
 
   const dados = (await resposta.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
   };
-  const texto = dados.choices?.[0]?.message?.content ?? '';
-  const json = extrairJSON(texto);
-  if (!json) throw new Error('IA nao retornou JSON valido');
+  const texto =
+    dados.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? '';
 
+  const json = extrairJSON(texto);
+  if (!json) throw new Error('Gemini nao retornou JSON valido');
   return normalizar(json);
 }
 

@@ -30,14 +30,14 @@ export function PaginaVideo({
   analise,
   msg,
   csrf,
-  podeAnalisar,
+  iaAtiva,
 }: {
   user: User;
   video: VideoRow;
   analise: AnaliseRow | null;
   msg?: string;
   csrf: string;
-  podeAnalisar: boolean;
+  iaAtiva: boolean;
 }) {
   const fortes = parseLista(analise?.pontos_fortes ?? null);
   const melhorar = parseLista(analise?.pontos_melhorar ?? null);
@@ -76,37 +76,33 @@ export function PaginaVideo({
                 <p>{analise.treino_sugerido}</p>
               </div>
             ) : null}
-
-            <form method="post" action={`/videos/${video.id}/analisar`} style="margin-top:20px">
-              <input type="hidden" name="csrf" value={csrf} />
-              <button class="btn btn-sec" type="submit">Analisar de novo</button>
-            </form>
           </>
         ) : (
           <>
             <p class="sub">
               {video.status === 'processando'
-                ? 'O coach esta assistindo seu video. Isso leva alguns minutos.'
-                : 'Seu video esta guardado. Peça a analise quando quiser.'}
+                ? 'O coach esta assistindo seu video.'
+                : video.status === 'erro'
+                  ? 'Nao conseguimos analisar esse video. Tente enviar de novo.'
+                  : 'Esse treino ainda nao tem analise.'}
             </p>
-            {podeAnalisar ? (
-              <form method="post" action={`/videos/${video.id}/analisar`}>
-                <input type="hidden" name="csrf" value={csrf} />
-                <button class="btn btn-pri btn-largo" type="submit" disabled={video.status === 'processando'}>
-                  {video.status === 'processando' ? 'Analisando...' : 'Analisar com o coach'}
-                </button>
-              </form>
+            {iaAtiva ? (
+              <a class="btn btn-pri btn-largo" href="/videos/novo">Enviar outro video</a>
             ) : (
-              <div class="flash">A analise automatica esta em finalizacao. Avisamos quando estiver pronta.</div>
+              <div class="flash">A analise automatica esta em finalizacao. Veja uma <a href="/exemplo">analise de exemplo</a>.</div>
             )}
           </>
         )}
 
+        <p style="color:var(--cinza);font-size:.88rem;margin-top:22px">
+          Seu video nao fica guardado: depois da analise, o arquivo e descartado.
+        </p>
+
         <form method="post" action={`/videos/${video.id}/apagar`} style="margin-top:10px">
           <input type="hidden" name="csrf" value={csrf} />
           <button class="btn btn-sec btn-mini" type="submit"
-            onclick="return confirm('Apagar este video e a analise dele? Nao tem como recuperar depois.')">
-            Apagar este video
+            onclick="return confirm('Apagar esta analise? Nao tem como recuperar depois.')">
+            Apagar este treino
           </button>
         </form>
 

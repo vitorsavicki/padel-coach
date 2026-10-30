@@ -5,6 +5,7 @@ export type Bindings = {
   APP_NAME: string;
   // R2: ainda nao ativado. Enquanto faltar, o upload responde "em breve".
   VIDEOS?: R2Bucket;
+  // Opcional: o padrao e o endpoint nativo do Gemini.
   IA_BASE_URL?: string;
   IA_API_KEY?: string;
   IA_MODEL?: string;

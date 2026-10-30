@@ -1,5 +1,16 @@
-IA_BASE_URL=http://localhost:20128/v1
-IA_API_KEY=chave-do-omniroute-ou-openrouter
-IA_MODEL=gemini/gemini-2.0-flash
+# Variaveis locais para `wrangler dev` (copie para .dev.vars).
+# Chaves reais NAO vao para o git.
+# Para producao, use: `wrangler secret put NOME`.
+
+# Gemini gratis (sem cartao): https://aistudio.google.com/apikey
+# IA_MODEL e so o nome do modelo, sem prefixo de provedor.
+IA_API_KEY=AIza...sua-chave-gemini
+IA_MODEL=gemini-2.0-flash
+# Opcional - so mude se quiser outro endpoint compativel.
+# IA_BASE_URL=https://generativelanguage.googleapis.com/v1beta
+
+# Mercado Pago (opcional; sem isso /planos mostra "pagamento em breve")
 MP_ACCESS_TOKEN=token-do-mercado-pago
+
+# Reservado para assinatura de sessao, se precisar no futuro.
 SESSION_SECRET=troque-por-uma-string-longa-aleatoria
