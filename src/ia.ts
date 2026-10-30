@@ -250,9 +250,17 @@ export async function analisarQuadros(
   if (MODO_DEMO_LOCAL) return analiseDemo(quadros.length);
 
   // Workers AI primeiro: mesma conta, sem chave, cota separada do Gemini.
-  // Groq primeiro: e o unico gratis sem cartao e sem licenca travada.
+  // Cada provedor entra em try/catch: a falha de um nao pode encerrar a
+  // analise quando outro ainda pode responder. Antes, o Groq (sem nenhum
+  // modelo de visao nesta conta) bloqueava o Gemini.
+  const falhas: string[] = [];
+
   if (env.GROQ_API_KEY) {
-    return analisarComGroq(env, quadros, systemPrompt);
+    try {
+      return await analisarComGroq(env, quadros, systemPrompt);
+    } catch (e) {
+      falhas.push(e instanceof Error ? e.message.slice(0, 120) : 'groq falhou');
+    }
   }
 
   if (env.AI) {
