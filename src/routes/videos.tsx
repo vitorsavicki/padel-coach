@@ -123,7 +123,10 @@ rotasVideos.post('/novo', async (c) => {
   const bytes = new Uint8Array(await arquivo.arrayBuffer());
   const mime = arquivo.type;
 
-  c.executionCtx.waitUntil(processarVideo(c.env, videoId, user!.id, bytes, mime));
+  // Aguardado aqui, nao em waitUntil: depois da resposta o runtime cancela
+  // o fetch de saida e o erro virava "The operation was aborted". O POST
+  // demora, mas o resultado chega.
+  await processarVideo(c.env, videoId, user!.id, bytes, mime);
 
   return c.redirect(`/videos/${videoId}`);
 });
