@@ -8,6 +8,7 @@ import { rotasPlanos, rotasWebhooks } from './routes/planos';
 import { Home } from './pages/Home';
 import { Dashboard } from './pages/Dashboard';
 import { PaginaPrivacidade } from './pages/Privacidade';
+import { PaginaExemplo } from './pages/Exemplo';
 
 export type { Bindings } from './lib/bindings';
 
@@ -56,6 +57,8 @@ app.get('/painel', async (c) => {
     />,
   );
 });
+
+app.get('/exemplo', (c) => c.html(<PaginaExemplo user={c.get('user')} />));
 
 app.get('/privacidade', (c) =>
   c.html(
