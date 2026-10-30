@@ -2,11 +2,11 @@
 //
 // O video chega pelo form, vai para o Gemini como inline_data (base64),
 // a analise volta e o arquivo e descartado. Nada de R2, nada de bucket.
-// Usa o endpoint NATIVO do Gemini (generateContent): video em base64 so
-// funciona por ali, o endpoint OpenAI-compatible nao aceita.
 //
-// Quando a chamada falha, o motivo REAL sobe junto (classe IaFalha), para
-// a pagina mostrar o que o Google respondeu em vez de um "erro" generico.
+// Duas formas de payload: a "cheia" (systemInstruction + responseMimeType)
+// e a MINIMA, so com contents. Se o Google recusar a cheia com 400
+// INVALID_ARGUMENT, a mesma chamada e refeita no formato minimo antes de
+// desistir - foi o que o teste com um mp4 real exigiu.
 
 import type { Bindings } from './lib/bindings';
 
@@ -22,11 +22,8 @@ export type AnaliseCoach = {
 // infla o arquivo em ~33%. 14MB de video -> ~19MB de corpo, com folga.
 export const LIMITE_BYTES = 14 * 1024 * 1024;
 
-// Modelos tentados em ordem quando o configurado nao existe mais: o Google
-// aposenta modelos antigos e a chave passa a receber 404 NOT_FOUND.
 const MODELOS_RESERVA = ['gemini-flash-latest', 'gemini-2.5-flash'];
 
-// Falha vinda do Gemini, com o status HTTP e um trecho da mensagem dele.
 export class IaFalha extends Error {
   status: number;
   detalhe: string;
@@ -74,11 +71,42 @@ export async function analisarBytes(
     }
 
     ultima = { status: r.status, erro: r.erro };
-    // 404 = modelo inexistente: vale tentar o proximo. Outro erro nao melhora.
     if (r.status !== 404) break;
   }
 
   throw new IaFalha(ultima?.status ?? 0, ultima?.erro ?? 'falha desconhecida');
+}
+
+// Formato "cheio" e formato minimo. O minimo existe porque o cheio pode
+// ser recusado com 400 dependendo do modelo e do tipo de midia inline.
+function montarCorpo(
+  base64: string,
+  mime: string,
+  systemPrompt: string,
+  minimal: boolean,
+): Record<string, unknown> {
+  const instrucao = minimal
+    ? `${systemPrompt}\n\nResponda SOMENTE com JSON valido, sem texto fora dele, no formato:\n{"nota_geral":0-10,"resumo":"","pontos_fortes":[],"pontos_melhorar":[],"treino_sugerido":""}`
+    : 'Analise este video de padel do aluno.';
+
+  const corpo: Record<string, unknown> = {
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          { text: instrucao },
+          { inline_data: { mime_type: mime, data: base64 } },
+        ],
+      },
+    ],
+  };
+
+  if (!minimal) {
+    corpo.systemInstruction = { parts: [{ text: systemPrompt }] };
+    corpo.generationConfig = { temperature: 0.4, responseMimeType: 'application/json' };
+  }
+
+  return corpo;
 }
 
 async function chamarGemini(
@@ -87,6 +115,7 @@ async function chamarGemini(
   base64: string,
   mime: string,
   systemPrompt: string,
+  minimal = false,
 ): Promise<Tentativa> {
   const base = baseGemini(env.IA_BASE_URL);
   const url = `${base}/models/${modelo}:generateContent`;
@@ -102,23 +131,14 @@ async function chamarGemini(
         'Content-Type': 'application/json',
         'x-goog-api-key': env.IA_API_KEY as string,
       },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              { text: 'Analise este video de padel do aluno.' },
-              { inline_data: { mime_type: mime, data: base64 } },
-            ],
-          },
-        ],
-        generationConfig: { temperature: 0.4, responseMimeType: 'application/json' },
-      }),
+      body: JSON.stringify(montarCorpo(base64, mime, systemPrompt, minimal)),
     });
 
     if (!resposta.ok) {
       const corpo = await resposta.text();
+      if (resposta.status === 400 && !minimal) {
+        return chamarGemini(env, modelo, base64, mime, systemPrompt, true);
+      }
       return { ok: false, status: resposta.status, erro: limparErro(corpo) };
     }
 
@@ -136,21 +156,7 @@ async function chamarGemini(
   }
 }
 
-// Trecho legivel da resposta de erro do Google, sem nada sensivel.
-function limparErro(corpo: string): string {
-  const texto = corpo.replace(/\s+/g, ' ').trim();
-  try {
-    const json = JSON.parse(corpo) as { error?: { message?: string; status?: string } };
-    const msg = json.error?.message ?? texto;
-    const st = json.error?.status ? ` [${json.error.status}]` : '';
-    return `${msg.slice(0, 200)}${st}`;
-  } catch {
-    return texto.slice(0, 200);
-  }
-}
-
 // Traduz a resposta do Google para uma instrucao que o jogador entende.
-// O detalhe cru continua guardado; isto e o que aparece em destaque.
 export function dicaParaErro(motivo: string): string | null {
   const m = motivo.toLowerCase();
   if (m.includes('invalid_argument') || m.includes('400')) {
@@ -181,11 +187,24 @@ function baseGemini(configurado?: string): string {
   return configurado.replace(/\/$/, '');
 }
 
-// Nomes vindos de outros provedores chegam como "gemini/gemini-2.0-flash"
-// ou "models/gemini-2.0-flash". O endpoint nativo quer so o nome final.
+// Nomes de outros provedores chegam como "gemini/gemini-2.0-flash" ou
+// "models/gemini-2.0-flash". O endpoint nativo quer so o nome final.
 function normalizarModelo(nome: string): string {
   const semPrefixo = nome.includes('/') ? nome.split('/').pop() ?? nome : nome;
   return semPrefixo.trim();
+}
+
+// Trecho legivel da resposta de erro do Google, sem nada sensivel.
+function limparErro(corpo: string): string {
+  const texto = corpo.replace(/\s+/g, ' ').trim();
+  try {
+    const json = JSON.parse(corpo) as { error?: { message?: string; status?: string } };
+    const msg = json.error?.message ?? texto;
+    const st = json.error?.status ? ` [${json.error.status}]` : '';
+    return `${msg.slice(0, 200)}${st}`;
+  } catch {
+    return texto.slice(0, 200);
+  }
 }
 
 function bytesToBase64(bytes: Uint8Array): string {
