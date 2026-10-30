@@ -37,6 +37,88 @@ ul.feats li::before{content:'';position:absolute;left:0;top:6px;width:9px;height
 .prova strong{color:var(--quadra-esc)}
 `;
 
+// Quadra animada: quatro jogadores em movimento, raquetes batendo e a bola
+// cruzando a rede. SVG inline com keyframes CSS, sem imagem externa.
+function QuadraAnimada() {
+  const JOGADORES = [
+    { x: 150, y: 118, pulo: 'q-p1', raq: 'q-raq' },
+    { x: 95, y: 163, pulo: 'q-p2', raq: 'q-raq2' },
+    { x: 470, y: 150, pulo: 'q-p3', raq: 'q-raq3' },
+    { x: 530, y: 108, pulo: 'q-p4', raq: 'q-raq4' },
+  ];
+
+  return (
+    <div class="quadra">
+      <style>{`
+        .quadra svg{overflow:visible}
+        .q-p{transform-box:fill-box;transform-origin:50% 100%}
+        .q-p1{animation:q-pula 2.4s ease-in-out infinite}
+        .q-p2{animation:q-pula 2.4s ease-in-out .55s infinite}
+        .q-p3{animation:q-pula 2.1s ease-in-out .9s infinite}
+        .q-p4{animation:q-pula 2.1s ease-in-out 1.45s infinite}
+        .q-raq{transform-box:fill-box;transform-origin:0% 100%;animation:q-bate .9s ease-in-out infinite}
+        .q-raq2{animation-delay:.35s}
+        .q-raq3{animation-delay:.62s}
+        .q-raq4{animation-delay:.18s}
+        .q-bola{animation:q-vai 2.8s cubic-bezier(.42,0,.58,1) infinite}
+        .q-sombra{transform-box:fill-box;transform-origin:50% 50%;animation:q-sombra 2.4s ease-in-out infinite}
+        @keyframes q-pula{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+        @keyframes q-bate{0%,100%{transform:rotate(-28deg)}50%{transform:rotate(20deg)}}
+        @keyframes q-sombra{0%,100%{transform:scale(1);opacity:.2}50%{transform:scale(.8);opacity:.1}}
+        @keyframes q-vai{
+          0%{transform:translate(0,0)}
+          28%{transform:translate(142px,-30px)}
+          56%{transform:translate(292px,14px)}
+          82%{transform:translate(150px,-48px)}
+          100%{transform:translate(0,0)}
+        }
+        @media (prefers-reduced-motion: reduce){
+          .q-p,.q-raq,.q-bola,.q-sombra{animation:none !important}
+        }
+      `}</style>
+      <svg viewBox="0 0 640 300" width="100%" role="img"
+        aria-label="Quadra de padel com quatro jogadores em movimento e a bola cruzando a rede">
+        <defs>
+          <linearGradient id="piso" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#19a08f" />
+            <stop offset="1" stop-color="#0f766e" />
+          </linearGradient>
+        </defs>
+
+        <rect x="60" y="40" width="520" height="220" rx="10" fill="url(#piso)" />
+        <rect x="60" y="40" width="520" height="220" rx="10" fill="none" stroke="#0a4f4a" stroke-width="3" />
+        <line x1="320" y1="40" x2="320" y2="260" stroke="#e9fbf5" stroke-width="2" opacity=".75" />
+        <line x1="60" y1="150" x2="580" y2="150" stroke="#e9fbf5" stroke-width="2" opacity=".55" />
+        <line x1="190" y1="150" x2="450" y2="150" stroke="#e9fbf5" stroke-width="3" opacity=".9" />
+        <line x1="60" y1="105" x2="60" y2="195" stroke="#e9fbf5" stroke-width="2" opacity=".55" />
+        <line x1="580" y1="105" x2="580" y2="195" stroke="#e9fbf5" stroke-width="2" opacity=".55" />
+
+        {JOGADORES.map((p) => (
+          <g>
+            <ellipse class="q-sombra" cx={p.x} cy={p.y + 52} rx="14" ry="4" fill="#0a4f4a" />
+            <g class={`q-p ${p.pulo}`}>
+              <circle cx={p.x} cy={p.y} r="8" fill="#0a4f4a" />
+              <rect x={p.x - 6} y={p.y + 8} width="12" height="24" rx="5" fill="#0a4f4a" />
+              <line x1={p.x - 2} y1={p.y + 32} x2={p.x - 7} y2={p.y + 50} stroke="#0a4f4a" stroke-width="4" stroke-linecap="round" />
+              <line x1={p.x + 2} y1={p.y + 32} x2={p.x + 7} y2={p.y + 50} stroke="#0a4f4a" stroke-width="4" stroke-linecap="round" />
+              <g class={`q-raq ${p.raq}`}>
+                <line x1={p.x + 6} y1={p.y + 12} x2={p.x + 24} y2={p.y - 4} stroke="#0a4f4a" stroke-width="3.5" stroke-linecap="round" />
+                <ellipse cx={p.x + 28} cy={p.y - 7} rx="7" ry="9" fill="none" stroke="#0a4f4a" stroke-width="2.5" />
+              </g>
+            </g>
+          </g>
+        ))}
+
+        <g class="q-bola">
+          <circle cx="172" cy="118" r="8" fill="#d9f24a" stroke="#0a4f4a" stroke-width="1.8" />
+          <path d="M166 112c3 1 5 4 5 7" fill="none" stroke="#0a4f4a" stroke-width="1.2" />
+          <path d="M178 112c-3 1-5 4-5 7" fill="none" stroke="#0a4f4a" stroke-width="1.2" />
+        </g>
+      </svg>
+    </div>
+  );
+}
+
 // Ilustracao da quadra de padel, em SVG inline (sem imagem externa).
 function Quadra() {
   return (
@@ -133,7 +215,7 @@ export function Home({ user, msg }: { user: User | null; msg?: string }) {
                 <span><strong>Nota de 0 a 10</strong> a cada treino</span>
                 <span><strong>Treino</strong> pronto para a semana</span>
               </div>
-              <Quadra />
+              <QuadraAnimada />
             </div>
           </section>
 
