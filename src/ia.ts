@@ -15,8 +15,9 @@ export type AnaliseCoach = {
   treino_sugerido: string;
 };
 
-// 20MB de video = ~27MB em base64, dentro do limite de corpo do Worker.
-export const LIMITE_BYTES = 20 * 1024 * 1024;
+// O Gemini recusa inline_data acima de ~20MB de REQUISICAO, e base64
+// infla o arquivo em ~33%. 14MB de video -> ~19MB de corpo, com folga.
+export const LIMITE_BYTES = 14 * 1024 * 1024;
 
 export function iaConfigurada(env: Bindings): boolean {
   return Boolean(env.IA_API_KEY && env.IA_MODEL);

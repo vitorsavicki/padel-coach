@@ -48,7 +48,7 @@ export function PaginaNovoVideo({
               <input name="titulo" maxlength={80} placeholder="Ex: Treino de saque 12/11" />
             </label>
             <label class="campo">
-              <span>Video (mp4 ou mov, ate 20MB)</span>
+              <span>Video (mp4 ou mov, ate 14MB - cerca de 2 minutos)</span>
               <input name="video" type="file" accept="video/mp4,video/quicktime,video/x-m4v" required />
             </label>
             <button class="btn btn-pri btn-largo" type="submit">Analisar meu treino</button>

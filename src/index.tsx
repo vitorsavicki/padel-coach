@@ -70,7 +70,8 @@ app.get('/privacidade', (c) =>
   ),
 );
 
-// LGPD: apagar a conta remove videos (R2), analises, sessoes e o cadastro.
+// LGPD: apagar a conta remove analises, sessoes e o cadastro.
+// Nao ha video guardado: o arquivo e descartado apos a analise.
 app.post('/conta/apagar', async (c) => {
   const user = c.get('user');
   if (!user) return c.redirect('/entrar');

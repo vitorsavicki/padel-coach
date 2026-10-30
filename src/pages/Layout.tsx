@@ -63,7 +63,7 @@ const TEXTOS_MSG: Record<string, string> = {
   dados: 'Confira os dados: nome, e-mail e senha (minimo 8 caracteres).',
   arquivo: 'Escolha um video para enviar.',
   tipo: 'O video precisa ser mp4 ou mov.',
-  tamanho: 'Video muito grande. Envie um clipe de ate 20MB (mais ou menos 2 minutos).',
+  tamanho: 'Video muito grande. Envie um clipe de ate 14MB (mais ou menos 2 minutos).',
   senha_errada: 'E-mail ou senha incorretos.',
   saiu: 'Voce saiu. Ate o proximo treino!',
   csrf: 'Sua sessao expirou. Recarregue a pagina e tente de novo.',
