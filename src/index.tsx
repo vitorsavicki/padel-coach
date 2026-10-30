@@ -83,6 +83,10 @@ app.get('/saude/ia/groq', async (c) => {
     corpoLista,
     statusTexto,
     corpoTexto,
+    // Uma chave real do Groq tem ~56 caracteres. Se vier ~13, o que foi
+    // colado no secret foi a forma mascarada do painel (gsk_...rCe6).
+    chaveLen: (c.env.GROQ_API_KEY ?? '').trim().length,
+    chaveTemEspaco: (c.env.GROQ_API_KEY ?? '') !== (c.env.GROQ_API_KEY ?? '').trim(),
   });
 });
 

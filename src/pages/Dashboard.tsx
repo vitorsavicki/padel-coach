@@ -100,6 +100,7 @@ export function Dashboard({
   videos: VideoItem[];
   pontos: PontoEvolucao[];
   usadas?: number;
+  csrf?: string;
   msg?: string;
 }) {
   const analisados = videos.filter((v) => v.nota !== null).length;
