@@ -12,6 +12,15 @@ const CSS_NOVO = `
 .limites ul{list-style:none;padding:0;margin:0;display:grid;gap:7px}
 .limites li{font-size:.88rem;color:#2c4740}
 .limites p{font-size:.82rem;color:var(--cinza);margin-top:10px;line-height:1.45}
+.prev-box{display:none;margin:16px 0 6px}
+.prev-box.on{display:block}
+.prev{width:100%;max-height:340px;border-radius:14px;background:#000;display:block}
+.prev-legenda{font-size:.82rem;color:var(--cinza);text-align:center;margin-top:6px}
+.duvidas{margin-top:34px;text-align:left}
+.duvidas h2{font-size:1.1rem;margin-bottom:12px;text-align:center}
+.duvida{background:#fff;border:1px solid var(--borda);border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.duvida summary{cursor:pointer;font-weight:700;color:var(--quadra-esc);font-size:.95rem}
+.duvida p{margin-top:8px;font-size:.92rem;color:#2c4740}
 .setup{background:#fff8e1;border:1px solid #ecd27a;border-radius:12px;padding:16px 18px;margin:0 0 22px;text-align:left;font-size:.9rem;color:#7a5a00}
 .setup code{display:block;background:#fff;border:1px solid #ecd27a;border-radius:8px;padding:10px 12px;margin:8px 0;font-size:.85rem;color:#5a4200;overflow-x:auto;white-space:pre}
 .palco{display:none;margin:22px 0 6px;padding:22px 18px;border-radius:18px;background:linear-gradient(180deg,#eaf7f1,#f7fcfa);border:1px solid var(--borda)}
@@ -66,7 +75,7 @@ const SCRIPT = `
           if(i>=total){URL.revokeObjectURL(url);resolve(out);return;}
           var t=dur*(0.08+0.84*(i/(total-1)));
           v.currentTime=Math.min(t,dur-0.05);
-          dizer('Lendo o video no seu aparelho: '+(i+1)+' de '+total+' quadros');
+          dizer('Pegando o momento '+(i+1)+' de '+total+' do seu treino...');
           progresso(Math.round(((i+1)/total)*45));
           v.onseeked=function(){
             v.onseeked=null;
@@ -215,6 +224,11 @@ export function PaginaNovoVideo({
           Testar a conexao com a IA
         </button>
 
+        <div class="prev-box" id="prevbox">
+          <video class="prev" id="prev" controls playsinline />
+          <p class="prev-legenda">Confira o treino antes de analisar. Este video nao sai do seu aparelho.</p>
+        </div>
+
         <div class="palco" id="palco">
           <span id="masc"><Mascote humor="analisando" size={92} /></span>
           <div class="fala" id="fala">Preparando...</div>
@@ -225,6 +239,30 @@ export function PaginaNovoVideo({
             <li>O coach analisa seu jogo</li>
             <li>Montar o treino da semana</li>
           </ul>
+        </div>
+
+        <div class="duvidas">
+          <h2>Duvidas de quem esta chegando agora</h2>
+          <details class="duvida">
+            <summary>Meu video fica guardado no site?</summary>
+            <p>Nao. O video e lido no seu proprio celular e nao e enviado. So as imagens de alguns momentos vao para o coach. Guardamos a nota e o feedback.</p>
+          </details>
+          <details class="duvida">
+            <summary>Preciso instalar algum aplicativo?</summary>
+            <p>Nao. E so abrir o site no navegador do celular, escolher o video e esperar. Nada para baixar.</p>
+          </details>
+          <details class="duvida">
+            <summary>Quanto tempo leva a analise?</summary>
+            <p>Normalmente de 30 segundos a 2 minutos. O mascote mostra em que etapa esta, do primeiro ao ultimo passo.</p>
+          </details>
+          <details class="duvida">
+            <summary>Como gravar um video que o coach consiga avaliar?</summary>
+            <p>Apoie o celular de lado da quadra, na altura do peito, e grave de 30 segundos a 2 minutos de um treino ou jogo. Nao precisa de camera profissional.</p>
+          </details>
+          <details class="duvida">
+            <summary>E se der erro?</summary>
+            <p>O mascote explica o que aconteceu e o botao vira "Tentar de novo". Seu video continua no celular - nada se perde.</p>
+          </details>
         </div>
 
         <p class="troca"><a href="/painel">Voltar para meus treinos</a></p>
