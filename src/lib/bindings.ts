@@ -9,6 +9,8 @@ export type Bindings = {
   IA_BASE_URL?: string;
   IA_API_KEY?: string;
   IA_MODEL?: string;
+  // Groq: gratis, sem cartao, cota separada do Gemini.
+  GROQ_API_KEY?: string;
   // Workers AI: roda na mesma conta, sem chave e sem cartao.
   AI?: Ai;
   // Mercado Pago: sem o token, /planos mostra "pagamento em breve".

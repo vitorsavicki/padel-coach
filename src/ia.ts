@@ -76,7 +76,12 @@ async function analisarComWorkersAi(
 
 export function iaConfigurada(env: Bindings): boolean {
   // Em demonstracao a analise nao chama API, entao nao exige chave.
-  return MODO_DEMO_LOCAL || Boolean(env.AI) || Boolean(env.IA_API_KEY && env.IA_MODEL);
+  return (
+    MODO_DEMO_LOCAL ||
+    Boolean(env.GROQ_API_KEY) ||
+    Boolean(env.AI) ||
+    Boolean(env.IA_API_KEY && env.IA_MODEL)
+  );
 }
 
 // Os quadros chegam como data URL ("data:image/jpeg;base64,...").
@@ -145,6 +150,76 @@ function analiseDemo(quantos: number): AnaliseCoach {
   };
 }
 
+// Groq: gratis, sem cartao, cota separada do Gemini. Modelos de visao da
+// Meta (llama-4) aceitam varias imagens numa mensagem so.
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_MODELOS = [
+  'meta-llama/llama-4-scout-17b-16e-instruct',
+  'meta-llama/llama-4-maverick-17b-128e-instruct',
+];
+
+async function analisarComGroq(
+  env: Bindings,
+  quadros: string[],
+  systemPrompt: string,
+): Promise<AnaliseCoach> {
+  if (!env.GROQ_API_KEY) throw new IaFalha(0, 'falta GROQ_API_KEY');
+
+  const imagens = quadros.slice(0, 4);
+  let ultimo = 'nenhum modelo respondeu';
+
+  for (const modelo of GROQ_MODELOS) {
+    const controlador = new AbortController();
+    const timer = setTimeout(() => controlador.abort(), 90_000);
+    try {
+      const r = await fetch(GROQ_URL, {
+        method: 'POST',
+        signal: controlador.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${env.GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: modelo,
+          temperature: 0,
+          max_tokens: 1400,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: 'Estes sao os momentos do treino, em ordem. Analise.' },
+                ...imagens.map((q) => ({ type: 'image_url', image_url: { url: q } })),
+              ],
+            },
+          ],
+        }),
+      });
+
+      const corpo = await r.text();
+      if (!r.ok) {
+        ultimo = `${modelo}: ${limparErro(corpo)}`;
+        continue;
+      }
+
+      const dados = JSON.parse(corpo) as {
+        choices?: Array<{ message?: { content?: string } }>;
+      };
+      const saida = dados.choices?.[0]?.message?.content ?? '';
+      const json = extrairJSON(saida);
+      if (json) return normalizar(json);
+
+      ultimo = `${modelo}: respondeu sem JSON (${saida.slice(0, 90)})`;
+    } catch (e) {
+      ultimo = `${modelo}: ${e instanceof Error ? e.message.slice(0, 120) : 'falha'}`;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  throw new IaFalha(0, `Groq: ${ultimo}`);
+}
+
 export async function analisarQuadros(
   env: Bindings,
   quadros: string[],
@@ -153,6 +228,11 @@ export async function analisarQuadros(
   if (MODO_DEMO_LOCAL) return analiseDemo(quadros.length);
 
   // Workers AI primeiro: mesma conta, sem chave, cota separada do Gemini.
+  // Groq primeiro: e o unico gratis sem cartao e sem licenca travada.
+  if (env.GROQ_API_KEY) {
+    return analisarComGroq(env, quadros, systemPrompt);
+  }
+
   if (env.AI) {
     try {
       return await analisarComWorkersAi(env, quadros, systemPrompt);
@@ -339,6 +419,34 @@ export type DiagnosticoIa = {
 // Testa a conexao com o Google SEM enviar video. Isola o provedor do fluxo:
 // se isto falhar, o problema e chave/modelo, nunca o video do aluno.
 export async function diagnosticarIa(env: Bindings): Promise<DiagnosticoIa> {
+  // Testa o provedor que a analise realmente usa. Antes testava so o Gemini
+  // e dizia "conexao ok" para um modelo aposentado.
+  if (env.GROQ_API_KEY) {
+    const inicio = Date.now();
+    try {
+      const r = await fetch('https://api.groq.com/openai/v1/models', {
+        headers: { Authorization: `Bearer ${env.GROQ_API_KEY}` },
+      });
+      const ms = Date.now() - inicio;
+      const corpo = r.ok ? '' : await r.text();
+      return {
+        ok: r.ok,
+        modelo: 'groq / llama-4-scout',
+        status: r.status,
+        ms,
+        detalhe: r.ok ? 'chave do Groq aceita' : limparErro(corpo),
+      };
+    } catch (e) {
+      return {
+        ok: false,
+        modelo: 'groq',
+        status: 0,
+        ms: Date.now() - inicio,
+        detalhe: e instanceof Error ? e.message.slice(0, 120) : 'falha de rede',
+      };
+    }
+  }
+
   const modelo = env.IA_MODEL ? normalizarModelo(env.IA_MODEL) : '(nao definido)';
   if (!env.IA_API_KEY || !env.IA_MODEL) {
     return { ok: false, modelo, status: 0, ms: 0, detalhe: 'falta IA_API_KEY ou IA_MODEL' };
