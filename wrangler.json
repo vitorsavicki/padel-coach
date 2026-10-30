@@ -1,13 +1,13 @@
-{
+﻿{
   "name": "padel-coach",
   "main": "src/index.tsx",
   "compatibility_date": "2025-10-01",
   "compatibility_flags": ["nodejs_compat"],
   "d1_databases": [
-    { "binding": "DB", "database_name": "padel_coach_db", "database_id": "PREENCHER-saida-do-wrangler-d1-create" }
+    { "binding": "DB", "database_name": "padel_coach_db", "database_id": "f4c87e25-56a8-4cfc-9170-2d479a38d317" }
   ],
-  "r2_buckets": [
-    { "binding": "VIDEOS", "bucket_name": "padel-videos" }
-  ],
+  "r2_buckets": [], // ATIVAR DEPOIS: R2 pede ativacao 1x no dashboard Cloudflare (ou usar Backblaze B2 free). Bucket planejado: padel-videos
   "vars": { "APP_NAME": "Padel Coach IA" }
 }
+
+

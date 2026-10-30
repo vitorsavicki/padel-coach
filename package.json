@@ -10,5 +10,5 @@
     "db:migrate": "wrangler d1 execute padel_coach_db --file=schema.sql --remote"
   },
   "dependencies": { "hono": "^4.6.0" },
-  "devDependencies": { "wrangler": "^4.0.0", "typescript": "^5.6.0", "@cloudflare/workers-types": "^4.20241022.0" }
+  "devDependencies": { "wrangler": "^4.0.0", "typescript": "^5.6.0" }
 }
