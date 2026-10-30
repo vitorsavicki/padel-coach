@@ -125,13 +125,16 @@ rotasVideos.post('/novo', async (c) => {
     return json ? c.json({ ok: true, id: videoId }) : c.redirect(`/videos/${videoId}?msg=analisado`);
   } catch (e) {
     const motivo = e instanceof Error ? e.message.slice(0, 300) : 'falha desconhecida';
-    await c.env.DB
-      .prepare("UPDATE videos SET status = 'erro', erro_motivo = ? WHERE id = ?")
-      .bind(motivo, videoId)
-      .run();
 
-    if (json) return c.json({ ok: false, msg: dicaParaErro(motivo) ?? MSG_PADRAO, id: videoId });
-    return c.redirect(`/videos/${videoId}?msg=erro_ia`);
+    // Analise que falhou NAO fica salva: o registro sai do banco para nao
+    // poluir a lista de treinos com linhas "sem nota / falhou". O motivo
+    // ainda chega ao aluno pela resposta, e ele pode enviar de novo.
+    await c.env.DB.prepare('DELETE FROM analyses WHERE video_id = ?').bind(videoId).run();
+    await c.env.DB.prepare('DELETE FROM videos WHERE id = ?').bind(videoId).run();
+
+    const aviso = dicaParaErro(motivo) ?? MSG_PADRAO;
+    if (json) return c.json({ ok: false, msg: aviso });
+    return c.redirect(`/videos/novo?msg=erro_ia`);
   }
 });
 

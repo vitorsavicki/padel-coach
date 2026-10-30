@@ -231,9 +231,6 @@ export function PaginaNovoVideo({
           </p>
         </div>
 
-        <button class="btn btn-sec btn-largo" id="diag" type="button" style="margin-top:10px">
-          Testar a conexao com a IA
-        </button>
 
         <div class="prev-box" id="prevbox">
           <video class="prev" id="prev" controls playsinline />
