@@ -7,6 +7,11 @@ const CSS_NOVO = `
 .passo .n{flex:none;width:26px;height:26px;border-radius:50%;background:var(--bola);color:var(--quadra-esc);font-weight:800;display:flex;align-items:center;justify-content:center;font-size:.85rem}
 .dica{background:#eef4f1;border-radius:12px;padding:16px 18px;margin:18px 0 22px;font-size:.93rem;text-align:left;color:#2c4740}
 .dica strong{color:var(--quadra-esc)}
+.limites{background:#fff;border:1px solid var(--borda);border-radius:14px;padding:16px 18px;margin:20px 0 8px;text-align:left}
+.limites h3{font-size:.95rem;margin-bottom:8px;color:var(--quadra-esc)}
+.limites ul{list-style:none;padding:0;margin:0;display:grid;gap:7px}
+.limites li{font-size:.88rem;color:#2c4740}
+.limites p{font-size:.82rem;color:var(--cinza);margin-top:10px;line-height:1.45}
 .setup{background:#fff8e1;border:1px solid #ecd27a;border-radius:12px;padding:16px 18px;margin:0 0 22px;text-align:left;font-size:.9rem;color:#7a5a00}
 .setup code{display:block;background:#fff;border:1px solid #ecd27a;border-radius:8px;padding:10px 12px;margin:8px 0;font-size:.85rem;color:#5a4200;overflow-x:auto;white-space:pre}
 .palco{display:none;margin:22px 0 6px;padding:22px 18px;border-radius:18px;background:linear-gradient(180deg,#eaf7f1,#f7fcfa);border:1px solid var(--borda)}
@@ -160,7 +165,7 @@ export function PaginaNovoVideo({
           <div class="passo"><span class="n">1</span>
             <span>Grave de lado da quadra, com o celular apoiado. Da para ver seu posicionamento.</span></div>
           <div class="passo"><span class="n">2</span>
-            <span>De 30 segundos a 2 minutos ja bastam. Nao precisa ser o jogo inteiro.</span></div>
+            <span>De 30 segundos a 2 minutos ja bastam. Limite: 2 minutos e 100MB por arquivo.</span></div>
           <div class="passo"><span class="n">3</span>
             <span><strong>O video fica no seu celular.</strong> So as imagens dos momentos vao para o coach.</span></div>
         </div>
@@ -191,6 +196,20 @@ export function PaginaNovoVideo({
             {iaAtiva ? 'Analisar meu treino' : 'Analise em finalizacao'}
           </button>
         </form>
+
+        <div class="limites">
+          <h3>Limites do video</h3>
+          <ul>
+            <li><strong>Tempo: ate 2 minutos</strong> por treino. De 30 segundos a 2 minutos ja da uma analise completa.</li>
+            <li><strong>Tamanho: ate 100MB</strong> por arquivo. O video nao e enviado para o Google - o coach recebe so 6 imagens de momentos, menos de 300KB.</li>
+            <li><strong>Analises: 2 por mes</strong> no plano Gratis (20 no Atleta, ilimitado no Pro).</li>
+          </ul>
+          <p>
+            Por que tao curto? Com 6 momentos o coach avalia tecnica e posicionamento
+            sem gastar a cota gratuita do Google em um jogo inteiro. Se o video for
+            maior que 2 minutos, o proprio site usa apenas os momentos principais.
+          </p>
+        </div>
 
         <button class="btn btn-sec btn-largo" id="diag" type="button" style="margin-top:10px">
           Testar a conexao com a IA
