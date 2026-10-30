@@ -9,7 +9,7 @@ import { Home } from './pages/Home';
 import { Dashboard } from './pages/Dashboard';
 import { PaginaPrivacidade } from './pages/Privacidade';
 import { PaginaExemplo } from './pages/Exemplo';
-import { diagnosticarIa } from './ia';
+import { diagnosticarIa, diagnosticarGeracao } from './ia';
 
 export type { Bindings } from './lib/bindings';
 
@@ -25,6 +25,12 @@ app.get('/saude', (c) => c.json({ ok: true, app: c.env.APP_NAME }));
 app.get('/saude/ia', async (c) => {
   if (!c.get('user')) return c.json({ ok: false, detalhe: 'entre na sua conta' }, 401);
   return c.json(await diagnosticarIa(c.env));
+});
+
+// Teste do POST de analise: texto puro e texto + imagem de 1x1 px.
+app.get('/saude/ia/gerar', async (c) => {
+  if (!c.get('user')) return c.json({ ok: false, detalhe: 'entre na sua conta' }, 401);
+  return c.json(await diagnosticarGeracao(c.env));
 });
 
 app.get('/', (c) => c.html(<Home user={c.get('user')} msg={c.req.query('msg')} />));

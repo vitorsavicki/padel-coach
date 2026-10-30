@@ -242,6 +242,72 @@ export async function diagnosticarIa(env: Bindings): Promise<DiagnosticoIa> {
   }
 }
 
+export type DiagnosticoGeracao = {
+  texto: { ok: boolean; status: number; ms: number; detalhe: string };
+  imagem: { ok: boolean; status: number; ms: number; detalhe: string };
+  modelo: string;
+};
+
+// Testa o POST que realmente analisa: primeiro so texto, depois texto + uma
+// imagem minuscula. Isola "generateContent nao responde" de "payload grande".
+async function tentarGeracao(
+  env: Bindings,
+  modelo: string,
+  comImagem: boolean,
+): Promise<{ ok: boolean; status: number; ms: number; detalhe: string }> {
+  const base = baseGemini(env.IA_BASE_URL);
+  const partes: Array<Record<string, unknown>> = [{ text: 'Responda apenas: ok' }];
+  if (comImagem) {
+    partes.push({
+      inline_data: {
+        mime_type: 'image/jpeg',
+        data: '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==',
+      },
+    });
+  }
+
+  const controlador = new AbortController();
+  const timer = setTimeout(() => controlador.abort(), 20_000);
+  const inicio = Date.now();
+
+  try {
+    const r = await fetch(`${base}/models/${modelo}:generateContent`, {
+      method: 'POST',
+      signal: controlador.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': env.IA_API_KEY as string,
+      },
+      body: JSON.stringify({ contents: [{ role: 'user', parts: partes }] }),
+    });
+    const ms = Date.now() - inicio;
+    const texto = await r.text();
+    return {
+      ok: r.ok,
+      status: r.status,
+      ms,
+      detalhe: r.ok ? texto.slice(0, 120) : limparErro(texto),
+    };
+  } catch (e) {
+    const ms = Date.now() - inicio;
+    const msg = e instanceof Error ? e.message : 'falha de rede';
+    return { ok: false, status: 0, ms, detalhe: msg.slice(0, 120) };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export async function diagnosticarGeracao(env: Bindings): Promise<DiagnosticoGeracao> {
+  const modelo = env.IA_MODEL ? normalizarModelo(env.IA_MODEL) : '(nao definido)';
+  if (!env.IA_API_KEY || !env.IA_MODEL) {
+    const vazio = { ok: false, status: 0, ms: 0, detalhe: 'falta IA_API_KEY ou IA_MODEL' };
+    return { texto: vazio, imagem: vazio, modelo };
+  }
+  const texto = await tentarGeracao(env, modelo, false);
+  const imagem = await tentarGeracao(env, modelo, true);
+  return { texto, imagem, modelo };
+}
+
 function esperar(ms: number): Promise<void> {
   return new Promise((res) => setTimeout(res, ms));
 }
