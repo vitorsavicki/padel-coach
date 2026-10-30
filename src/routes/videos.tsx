@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { exigirLogin, type Vars } from '../lib/session';
 import { emitirTokenCsrf, csrfValido } from '../lib/csrf';
-import { analisarQuadros, quadrosValidos, iaConfigurada } from '../ia';
+import { analisarQuadros, quadrosValidos, iaConfigurada, dicaParaErro } from '../ia';
 import { podeAnalisar } from '../lib/plans';
 import { COACH_SYSTEM_PROMPT } from '../prompt';
 import type { Bindings } from '../lib/bindings';
@@ -27,6 +27,14 @@ export type AnaliseRow = {
   treino_sugerido: string | null;
 };
 
+// O formulario com JS manda este cabecalho e espera JSON, para mostrar o
+// progresso sem sair da pagina. Sem JS, o mesmo POST redireciona.
+function querJson(c: { req: { header: (n: string) => string | undefined } }): boolean {
+  return c.req.header('x-async') === '1';
+}
+
+const MSG_PADRAO = 'Nao conseguimos analisar agora. Tente de novo em alguns minutos.';
+
 rotasVideos.get('/novo', (c) => {
   const user = c.get('user');
   const guarda = exigirLogin(user);
@@ -41,16 +49,21 @@ rotasVideos.get('/novo', (c) => {
   );
 });
 
-// O video NAO sobe. O navegador le o arquivo, extrai 8 quadros e manda so
-// as imagens. O arquivo fica no celular do aluno e a resposta vem rapido.
+// O video NAO sobe. O navegador le o arquivo, extrai 6 quadros e manda so
+// as imagens. O arquivo fica no celular do aluno.
 rotasVideos.post('/novo', async (c) => {
+  const json = querJson(c);
   const user = c.get('user');
   const guarda = exigirLogin(user);
   if (guarda) return guarda;
 
   const corpo = await c.req.parseBody();
-  if (!csrfValido(c, corpo['csrf'])) return c.redirect('/videos/novo?msg=csrf');
-  if (!iaConfigurada(c.env)) return c.redirect('/videos/novo?msg=ia_off');
+  if (!csrfValido(c, corpo['csrf'])) {
+    return json ? c.json({ ok: false, msg: 'Sua sessao expirou. Recarregue a pagina.' }) : c.redirect('/videos/novo?msg=csrf');
+  }
+  if (!iaConfigurada(c.env)) {
+    return json ? c.json({ ok: false, msg: 'A analise ainda nao esta ligada.' }) : c.redirect('/videos/novo?msg=ia_off');
+  }
 
   let quadros: unknown = null;
   try {
@@ -58,12 +71,20 @@ rotasVideos.post('/novo', async (c) => {
   } catch {
     quadros = null;
   }
-  if (!quadrosValidos(quadros)) return c.redirect('/videos/novo?msg=quadros');
+  if (!quadrosValidos(quadros)) {
+    return json
+      ? c.json({ ok: false, msg: 'Nao consegui ler os quadros deste video. Tente outro arquivo mp4 ou mov.' })
+      : c.redirect('/videos/novo?msg=quadros');
+  }
 
   const titulo = String(corpo['titulo'] ?? '').trim().slice(0, 80) || 'Treino sem titulo';
 
   const limite = await podeAnalisar(c.env.DB, user!.id);
-  if (!limite.ok) return c.redirect('/videos/novo?msg=limite');
+  if (!limite.ok) {
+    return json
+      ? c.json({ ok: false, msg: 'Voce chegou ao limite de analises do seu plano neste mes.' })
+      : c.redirect('/videos/novo?msg=limite');
+  }
 
   const inserido = await c.env.DB
     .prepare('INSERT INTO videos (user_id, r2_key, titulo, status) VALUES (?, ?, ?, ?)')
@@ -97,13 +118,15 @@ rotasVideos.post('/novo', async (c) => {
       .bind(videoId)
       .run();
 
-    return c.redirect(`/videos/${videoId}?msg=analisado`);
+    return json ? c.json({ ok: true, id: videoId }) : c.redirect(`/videos/${videoId}?msg=analisado`);
   } catch (e) {
     const motivo = e instanceof Error ? e.message.slice(0, 300) : 'falha desconhecida';
     await c.env.DB
       .prepare("UPDATE videos SET status = 'erro', erro_motivo = ? WHERE id = ?")
       .bind(motivo, videoId)
       .run();
+
+    if (json) return c.json({ ok: false, msg: dicaParaErro(motivo) ?? MSG_PADRAO, id: videoId });
     return c.redirect(`/videos/${videoId}?msg=erro_ia`);
   }
 });

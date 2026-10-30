@@ -1,50 +1,76 @@
 import type { User } from '../lib/session';
 import { Layout, barraMsg } from './Layout';
+import { Mascote } from './Mascote';
 
 const CSS_NOVO = `
 .passo{display:flex;gap:12px;align-items:flex-start;margin-bottom:10px}
 .passo .n{flex:none;width:26px;height:26px;border-radius:50%;background:var(--bola);color:var(--quadra-esc);font-weight:800;display:flex;align-items:center;justify-content:center;font-size:.85rem}
 .dica{background:#eef4f1;border-radius:12px;padding:16px 18px;margin:18px 0 22px;font-size:.93rem;text-align:left;color:#2c4740}
 .dica strong{color:var(--quadra-esc)}
-.status-envio{min-height:22px;font-size:.9rem;font-weight:700;color:var(--quadra-esc);text-align:center;margin-top:6px}
 .setup{background:#fff8e1;border:1px solid #ecd27a;border-radius:12px;padding:16px 18px;margin:0 0 22px;text-align:left;font-size:.9rem;color:#7a5a00}
 .setup code{display:block;background:#fff;border:1px solid #ecd27a;border-radius:8px;padding:10px 12px;margin:8px 0;font-size:.85rem;color:#5a4200;overflow-x:auto;white-space:pre}
+.palco{display:none;margin:22px 0 6px;padding:22px 18px;border-radius:18px;background:linear-gradient(180deg,#eaf7f1,#f7fcfa);border:1px solid var(--borda)}
+.palco.on{display:block}
+.palco .mascote{margin-bottom:6px}
+.fala{font-size:1rem;font-weight:700;color:var(--quadra-esc);min-height:1.4em}
+.barra{max-width:280px;margin:12px auto 0;height:8px;border-radius:999px;background:#dcebe5;overflow:hidden}
+.barra span{display:block;height:100%;width:0;background:var(--quadra);border-radius:999px;transition:width .6s ease}
+.etapas{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:6px;text-align:left;max-width:320px;margin-left:auto;margin-right:auto}
+.etapas li{font-size:.86rem;color:#7d938c;display:flex;gap:8px;align-items:center}
+.etapas li.feito{color:var(--quadra-esc);font-weight:700}
+.etapas li.atual{color:var(--quadra-esc);font-weight:700}
+.etapas li::before{content:'';flex:none;width:8px;height:8px;border-radius:50%;background:#cfe2da}
+.etapas li.feito::before,.etapas li.atual::before{background:var(--quadra)}
+.etapas li.atual::before{box-shadow:0 0 0 3px rgba(15,118,110,.18)}
 `;
 
-// Le o video no aparelho do aluno e devolve 8 quadros JPEG em data URL.
-// Sem backticks e sem ${} aqui: este texto vive dentro de um template.
-const SCRIPT_QUADROS = `
+// Roda no navegador. Le o arquivo local, extrai 6 quadros e envia so as
+// imagens. Sem backticks e sem ${} aqui dentro: este texto vive em um
+// template literal no servidor.
+const SCRIPT = `
 (function(){
   var form=document.getElementById('fvid');
   if(!form){return;}
   var inp=document.getElementById('arq');
   var hid=document.getElementById('quadros');
-  var msg=document.getElementById('st');
   var btn=document.getElementById('bt');
-  function dizer(t){if(msg){msg.textContent=t;}}
+  var palco=document.getElementById('palco');
+  var fala=document.getElementById('fala');
+  var barra=document.getElementById('barra');
+  var masc=document.getElementById('masc');
+  var listas=document.querySelectorAll('#etapas li');
+  function dizer(t){if(fala){fala.textContent=t;}}
+  function humor(h){if(masc){masc.setAttribute('data-humor',h);}}
+  function progresso(p){if(barra){barra.style.width=p+'%';}}
+  function marcar(i){
+    for(var k=0;k<listas.length;k++){
+      listas[k].className=k<i?'feito':(k===i?'atual':'');
+    }
+  }
   function ler(file){
     return new Promise(function(resolve,reject){
       var v=document.createElement('video');
-      v.muted=true; v.playsInline=true; v.preload='auto';
+      v.muted=true;v.playsInline=true;v.preload='auto';
       var url=URL.createObjectURL(file);
       v.src=url;
       v.onloadedmetadata=function(){
         var dur=v.duration||0;
         if(!dur||!isFinite(dur)){URL.revokeObjectURL(url);reject(new Error('duracao'));return;}
-        var total=8, largura=640, c=document.createElement('canvas'), ctx=c.getContext('2d'), out=[], i=0;
+        var total=6,largura=480,c=document.createElement('canvas'),ctx=c.getContext('2d'),out=[],i=0;
         function passo(){
           if(i>=total){URL.revokeObjectURL(url);resolve(out);return;}
-          var t=dur*(0.06+0.88*(i/(total-1)));
+          var t=dur*(0.08+0.84*(i/(total-1)));
           v.currentTime=Math.min(t,dur-0.05);
-          dizer('Lendo o video no seu aparelho... '+(i+1)+' de '+total);
+          dizer('Lendo o video no seu aparelho: '+(i+1)+' de '+total+' quadros');
+          progresso(Math.round(((i+1)/total)*45));
           v.onseeked=function(){
             v.onseeked=null;
-            var lv=v.videoWidth||largura, av=v.videoHeight||480;
+            var lv=v.videoWidth||largura,av=v.videoHeight||480;
             var esc=Math.min(1,largura/lv);
-            c.width=Math.round(lv*esc); c.height=Math.round(av*esc);
+            c.width=Math.round(lv*esc);c.height=Math.round(av*esc);
             ctx.drawImage(v,0,0,c.width,c.height);
-            out.push(c.toDataURL('image/jpeg',0.6));
-            i++; passo();
+            out.push(c.toDataURL('image/jpeg',0.5));
+            i++;passo();
           };
         }
         passo();
@@ -56,14 +82,31 @@ const SCRIPT_QUADROS = `
     ev.preventDefault();
     var f=inp&&inp.files&&inp.files[0];
     if(!f){dizer('Escolha um video primeiro.');return;}
-    if(btn){btn.disabled=true;}
-    dizer('Preparando o video...');
+    if(btn){btn.disabled=true;btn.textContent='Analisando...';}
+    if(palco){palco.className='palco on';}
+    humor('analisando');marcar(0);progresso(6);
+    dizer('Abrindo o video aqui no seu aparelho...');
     ler(f).then(function(lista){
       hid.value=JSON.stringify(lista);
-      dizer('Enviando para o coach...');
-      form.submit();
+      marcar(1);progresso(55);
+      dizer('Enviando as imagens para o coach...');
+      var fd=new FormData(form);
+      return fetch('/videos/novo',{method:'POST',body:fd,headers:{'x-async':'1'},credentials:'same-origin'});
+    }).then(function(r){return r.json();}).then(function(j){
+      marcar(2);progresso(80);
+      dizer('O coach esta analisando seu posicionamento...');
+      if(j&&j.ok&&j.id){
+        progresso(100);marcar(3);humor('feliz');
+        dizer('Pronto! Abrindo sua analise...');
+        setTimeout(function(){location.href='/videos/'+j.id;},700);
+      }else{
+        humor('triste');marcar(1);
+        if(btn){btn.disabled=false;btn.textContent='Tentar de novo';}
+        dizer((j&&j.msg)?j.msg:'Nao conseguimos analisar agora. Tente de novo em alguns minutos.');
+      }
     }).catch(function(){
-      if(btn){btn.disabled=false;}
+      humor('triste');
+      if(btn){btn.disabled=false;btn.textContent='Tentar de novo';}
       dizer('Nao consegui ler esse video. Tente outro arquivo mp4 ou mov.');
     });
   };
@@ -84,7 +127,10 @@ export function PaginaNovoVideo({
   return (
     <Layout titulo="Analisar meu treino - Padel Coach IA" user={user} cssExtra={CSS_NOVO}>
       <section class="pagina">
-        <h1>Analisar meu treino</h1>
+        <div style="display:flex;gap:14px;align-items:center;justify-content:center;margin-bottom:6px">
+          <Mascote humor="feliz" size={64} />
+          <h1 style="margin:0;text-align:left">Analisar meu treino</h1>
+        </div>
         <p class="sub">Escolha um video do celular. Ele e lido aqui no seu aparelho - o arquivo nao sai de onde esta.</p>
         {barraMsg(msg)}
 
@@ -94,7 +140,7 @@ export function PaginaNovoVideo({
           <div class="passo"><span class="n">2</span>
             <span>De 30 segundos a 2 minutos ja bastam. Nao precisa ser o jogo inteiro.</span></div>
           <div class="passo"><span class="n">3</span>
-            <span><strong>O video fica no seu celular.</strong> So as imagens dos momentos vao para o coach. Guardamos a nota e o feedback.</span></div>
+            <span><strong>O video fica no seu celular.</strong> So as imagens dos momentos vao para o coach.</span></div>
         </div>
 
         {!iaAtiva ? (
@@ -117,17 +163,28 @@ export function PaginaNovoVideo({
           </label>
           <label class="campo">
             <span>Video do celular (mp4 ou mov)</span>
-            <input id="arq" name="video" type="file" accept="video/mp4,video/quicktime,video/x-m4v" required />
+            <input id="arq" type="file" accept="video/mp4,video/quicktime,video/x-m4v" required />
           </label>
           <button class="btn btn-pri btn-largo" id="bt" type="submit" disabled={!iaAtiva}>
             {iaAtiva ? 'Analisar meu treino' : 'Analise em finalizacao'}
           </button>
-          <div class="status-envio" id="st" />
         </form>
+
+        <div class="palco" id="palco">
+          <span id="masc"><Mascote humor="analisando" size={92} /></span>
+          <div class="fala" id="fala">Preparando...</div>
+          <div class="barra"><span id="barra" /></div>
+          <ul class="etapas" id="etapas">
+            <li class="atual">Ler o video no seu aparelho</li>
+            <li>Enviar as imagens para o coach</li>
+            <li>O coach analisa seu jogo</li>
+            <li>Montar o treino da semana</li>
+          </ul>
+        </div>
 
         <p class="troca"><a href="/painel">Voltar para meus treinos</a></p>
       </section>
-      <script dangerouslySetInnerHTML={{ __html: SCRIPT_QUADROS }} />
+      <script dangerouslySetInnerHTML={{ __html: SCRIPT }} />
     </Layout>
   );
 }
