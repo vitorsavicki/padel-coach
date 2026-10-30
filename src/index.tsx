@@ -50,7 +50,7 @@ app.get('/saude/ia/groq', async (c) => {
   if (c.env.GROQ_API_KEY) {
     try {
       const r1 = await fetch('https://api.groq.com/openai/v1/models', {
-        headers: { Authorization: `Bearer ${c.env.GROQ_API_KEY}` },
+        headers: { Authorization: `Bearer ${(c.env.GROQ_API_KEY ?? '').trim()}` },
       });
       statusLista = r1.status;
       corpoLista = (await r1.text()).slice(0, 300);
@@ -59,7 +59,7 @@ app.get('/saude/ia/groq', async (c) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${c.env.GROQ_API_KEY}`,
+          Authorization: `Bearer ${(c.env.GROQ_API_KEY ?? '').trim()}`,
         },
         body: JSON.stringify({
           model: 'llama-3.1-8b-instant',
@@ -107,12 +107,19 @@ app.get('/painel', async (c) => {
 
   const videos = await c.env.DB
     .prepare(
-      `SELECT v.id, v.titulo, v.status, v.enviado_em, a.nota_geral AS nota
+      `SELECT v.id, v.titulo, v.status, v.enviado_em, v.quadros, a.nota_geral AS nota
        FROM videos v LEFT JOIN analyses a ON a.video_id = v.id
        WHERE v.user_id = ? ORDER BY v.enviado_em DESC, v.id DESC`,
     )
     .bind(user!.id)
-    .all<{ id: number; titulo: string | null; status: string; enviado_em: string; nota: number | null }>();
+    .all<{
+      id: number;
+      titulo: string | null;
+      status: string;
+      enviado_em: string;
+      quadros: string | null;
+      nota: number | null;
+    }>();
 
   const pontos = await c.env.DB
     .prepare(
@@ -135,6 +142,7 @@ app.get('/painel', async (c) => {
       videos={videos.results ?? []}
       pontos={(pontos.results ?? []).map((p) => ({ rotulo: p.quando, nota: p.nota }))}
       usadas={uso?.n ?? 0}
+      csrf={emitirTokenCsrf(c)}
       msg={c.req.query('msg')}
     />,
   );

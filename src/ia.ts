@@ -166,6 +166,12 @@ function analiseDemo(quantos: number): AnaliseCoach {
   };
 }
 
+// O secret pode chegar com \n ou aspas do "wrangler secret put"; nesse caso
+// o Groq responde 401 "API Key not valid". Sanitiza em um lugar so.
+function chaveGroq(env: Bindings): string {
+  return (env.GROQ_API_KEY ?? '').trim().replace(/^["']|["']$/g, '');
+}
+
 // Groq: gratis, sem cartao, cota separada do Gemini. Modelos de visao da
 // Meta (llama-4) aceitam varias imagens numa mensagem so.
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
@@ -193,7 +199,7 @@ async function analisarComGroq(
         signal: controlador.signal,
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${env.GROQ_API_KEY}`,
+          Authorization: `Bearer ${chaveGroq(env)}`,
         },
         body: JSON.stringify({
           model: modelo,
@@ -441,7 +447,7 @@ export async function diagnosticarIa(env: Bindings): Promise<DiagnosticoIa> {
     const inicio = Date.now();
     try {
       const r = await fetch('https://api.groq.com/openai/v1/models', {
-        headers: { Authorization: `Bearer ${env.GROQ_API_KEY}` },
+        headers: { Authorization: `Bearer ${chaveGroq(env)}` },
       });
       const ms = Date.now() - inicio;
       const corpo = r.ok ? '' : await r.text();
