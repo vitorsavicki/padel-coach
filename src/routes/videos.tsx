@@ -11,7 +11,8 @@ import { PaginaVideo } from '../pages/Video';
 export const rotasVideos = new Hono<{ Bindings: Bindings; Variables: Vars }>();
 
 const TIPOS_OK = new Set(['video/mp4', 'video/quicktime', 'video/x-m4v']);
-const LIMITE_MB = 60;
+// Mesmo teto do Gemini (inline_data): 14MB de video.
+const LIMITE_MB = 14;
 
 export type VideoRow = {
   id: number;
