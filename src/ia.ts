@@ -149,6 +149,28 @@ function limparErro(corpo: string): string {
   }
 }
 
+// Traduz a resposta do Google para uma instrucao que o jogador entende.
+// O detalhe cru continua guardado; isto e o que aparece em destaque.
+export function dicaParaErro(motivo: string): string | null {
+  const m = motivo.toLowerCase();
+  if (m.includes('invalid_argument') || m.includes('400')) {
+    return 'O Google recusou o formato deste video. Converta para MP4 (H.264) - no iPhone, Ajustes > Camera > Formatos > Mais compativel - e envie de novo.';
+  }
+  if (m.includes('api key') || m.includes('401') || m.includes('403') || m.includes('permission')) {
+    return 'A chave da IA foi recusada. Confira IA_API_KEY em wrangler secret list e gere outra em aistudio.google.com/apikey.';
+  }
+  if (m.includes('not found') || m.includes('404')) {
+    return 'O modelo configurado nao existe mais. Atualize IA_MODEL (por exemplo: gemini-2.5-flash).';
+  }
+  if (m.includes('quota') || m.includes('429') || m.includes('resource_exhausted')) {
+    return 'A cota gratuita do Gemini acabou por hoje. Tente de novo amanha ou use outra chave.';
+  }
+  if (m.includes('abort') || m.includes('rede') || m.includes('network') || m.includes('fetch')) {
+    return 'A conexao com o Google caiu antes da resposta. Tente de novo com um clipe menor.';
+  }
+  return null;
+}
+
 // O endpoint so aceita o host do Google. Um IA_BASE_URL apontando para
 // localhost (comum em exemplos de OmniRoute) faria o Worker falhar em rede.
 function baseGemini(configurado?: string): string {
