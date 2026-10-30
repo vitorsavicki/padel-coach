@@ -1,4 +1,4 @@
--- Padel Coach IA — banco D1 (SQLite)
+-- Padel Coach IA â€” banco D1 (SQLite)
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email TEXT NOT NULL UNIQUE,
@@ -13,9 +13,9 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 CREATE TABLE IF NOT EXISTS plans (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  nome TEXT NOT NULL,              -- 'Grátis', 'Atleta', 'Pro'
+  nome TEXT NOT NULL,              -- 'GrÃ¡tis', 'Atleta', 'Pro'
   preco_centavos INTEGER NOT NULL DEFAULT 0,
-  videos_por_mes INTEGER NOT NULL, -- limite de análises/mês (0 = ilimitado)
+  videos_por_mes INTEGER NOT NULL, -- limite de anÃ¡lises/mÃªs (0 = ilimitado)
   ativo INTEGER NOT NULL DEFAULT 1
 );
 CREATE TABLE IF NOT EXISTS subscriptions (
@@ -51,6 +51,6 @@ CREATE TABLE IF NOT EXISTS analyses (
 CREATE INDEX IF NOT EXISTS idx_videos_user ON videos(user_id);
 CREATE INDEX IF NOT EXISTS idx_analyses_user ON analyses(user_id);
 INSERT OR IGNORE INTO plans (id, nome, preco_centavos, videos_por_mes) VALUES
-  (1, 'Grátis', 0, 2),
+  (1, 'GrÃ¡tis', 0, 2),
   (2, 'Atleta', 1990, 20),
   (3, 'Pro', 3990, 0);

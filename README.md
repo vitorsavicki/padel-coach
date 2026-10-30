@@ -13,7 +13,7 @@ multimodal via OmniRoute/OpenRouter).
    (nota 0-10, pontos fortes, o que melhorar, treino da semana)
 4. O dashboard mostra a evolucao das notas ao longo do tempo
 5. Planos: Gratis (2 analises/mes) | Atleta R$19,90 (20) | Pro R$39,90
-   (ilimitado) — cobranca via Mercado Pago (PIX/cartao, sem mensalidade)
+   (ilimitado) â€” cobranca via Mercado Pago (PIX/cartao, sem mensalidade)
 
 ## Setup
 
@@ -28,7 +28,7 @@ npm run dev
 
 ## Onde esta o cerebro
 
-`COACH-SYSTEM-PROMPT.md` — cole ali as instrucoes do GPT original. O resto
+`COACH-SYSTEM-PROMPT.md` â€” cole ali as instrucoes do GPT original. O resto
 do sistema le esse texto e usa como personalidade/rubrica do coach.
 
 ## Ordem de construcao

@@ -1,19 +1,19 @@
-# System prompt do Coach ó COLE AQUI as instruÁıes do seu GPT
+# System prompt do Coach ‚Äî COLE AQUI as instru√ß√µes do seu GPT
 
-> Bruno: copie as instruÁıes do GPT de padel e cole abaixo. Depois ajuste o
-> formato de saÌda (seÁ„o 2) para o site conseguir mostrar notas e evoluÁ„o.
+> Bruno: copie as instru√ß√µes do GPT de padel e cole abaixo. Depois ajuste o
+> formato de sa√≠da (se√ß√£o 2) para o site conseguir mostrar notas e evolu√ß√£o.
 
-## 1. InstruÁıes do coach (colar do GPT)
+## 1. Instru√ß√µes do coach (colar do GPT)
 
 (COLE AQUI)
 
-## 2. Formato de saÌda OBRIGAT”RIO (adicionar no final das instruÁıes)
+## 2. Formato de sa√≠da OBRIGAT√ìRIO (adicionar no final das instru√ß√µes)
 
-Responda SEMPRE em JSON v·lido, sem texto fora do JSON:
+Responda SEMPRE em JSON v√°lido, sem texto fora do JSON:
 {
   "nota_geral": 0-10,
   "resumo": "2-3 frases em PT-BR simples, tom de coach parceiro",
   "pontos_fortes": ["..."],
   "pontos_melhorar": ["..."],
-  "treino_sugerido": "1 treino pr·tico e especÌfico para a prÛxima semana"
+  "treino_sugerido": "1 treino pr√°tico e espec√≠fico para a pr√≥xima semana"
 }
