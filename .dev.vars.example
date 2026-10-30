@@ -5,7 +5,8 @@
 # Gemini gratis (sem cartao): https://aistudio.google.com/apikey
 # IA_MODEL e so o nome do modelo, sem prefixo de provedor.
 IA_API_KEY=AIza...sua-chave-gemini
-IA_MODEL=gemini-2.0-flash
+# So o nome do modelo, sem "gemini/" na frente (isso gera 404).
+IA_MODEL=gemini-2.5-flash
 # Opcional - so mude se quiser outro endpoint compativel.
 # IA_BASE_URL=https://generativelanguage.googleapis.com/v1beta
 

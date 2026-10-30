@@ -19,6 +19,7 @@ export type VideoRow = {
   titulo: string | null;
   status: string;
   enviado_em: string;
+  erro_motivo: string | null;
 };
 
 export type AnaliseRow = {
@@ -99,9 +100,14 @@ rotasVideos.post('/novo', async (c) => {
     await c.env.DB.prepare("UPDATE videos SET status = 'analisado' WHERE id = ?").bind(videoId).run();
 
     return c.redirect(`/videos/${videoId}?msg=analisado`);
-  } catch {
-    // Sem guardar nada: o registro fica so como historico do erro.
-    await c.env.DB.prepare("UPDATE videos SET status = 'erro' WHERE id = ?").bind(videoId).run();
+  } catch (e) {
+    // Guarda o motivo para a pagina mostrar. O erro da API nao contem o
+    // video, entao pode ser exibido sem expor dado sensivel.
+    const motivo = e instanceof Error ? e.message.slice(0, 300) : 'falha desconhecida';
+    await c.env.DB
+      .prepare("UPDATE videos SET status = 'erro', erro_motivo = ? WHERE id = ?")
+      .bind(motivo, videoId)
+      .run();
     return c.redirect(`/videos/${videoId}?msg=erro_ia`);
   }
 });
@@ -115,7 +121,7 @@ rotasVideos.get('/:id', async (c) => {
   if (!Number.isInteger(id)) return c.notFound();
 
   const video = await c.env.DB
-    .prepare('SELECT id, titulo, status, enviado_em FROM videos WHERE id = ? AND user_id = ?')
+    .prepare('SELECT id, titulo, status, enviado_em, erro_motivo FROM videos WHERE id = ? AND user_id = ?')
     .bind(id, user!.id)
     .first<VideoRow>();
   if (!video) return c.redirect('/painel?msg=sem_video');

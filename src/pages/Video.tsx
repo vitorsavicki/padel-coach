@@ -86,6 +86,12 @@ export function PaginaVideo({
                   ? 'Nao conseguimos analisar esse video. Tente enviar de novo.'
                   : 'Esse treino ainda nao tem analise.'}
             </p>
+            {video.status === 'erro' && video.erro_motivo ? (
+              <div class="flash erro" style="text-align:left;font-size:.85rem">
+                <strong>Motivo:</strong> {video.erro_motivo}
+              </div>
+            ) : null}
+
             {iaAtiva ? (
               <a class="btn btn-pri btn-largo" href="/videos/novo">Enviar outro video</a>
             ) : (
