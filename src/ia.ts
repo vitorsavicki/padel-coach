@@ -158,7 +158,9 @@ export async function analisarQuadros(
       return await analisarComWorkersAi(env, quadros, systemPrompt);
     } catch (e) {
       // Se falhar e houver chave do Gemini, ainda vale tentar o Gemini.
-      if (!env.IA_API_KEY || !env.IA_MODEL) throw e;
+      // Sempre propaga: cair calado no Gemini mostrava "cota esgotada"
+      // quando o Workers AI tinha falhado por outro motivo.
+      throw e;
     }
   }
 
