@@ -9,7 +9,7 @@ import { Home } from './pages/Home';
 import { Dashboard } from './pages/Dashboard';
 import { PaginaPrivacidade } from './pages/Privacidade';
 import { PaginaExemplo } from './pages/Exemplo';
-import { diagnosticarIa, diagnosticarGeracao, listarModelos } from './ia';
+import { diagnosticarIa, diagnosticarGeracao, listarModelos, listarModelosGroq } from './ia';
 
 export type { Bindings } from './lib/bindings';
 
@@ -31,6 +31,59 @@ app.get('/saude/ia', async (c) => {
 app.get('/saude/ia/gerar', async (c) => {
   if (!c.get('user')) return c.json({ ok: false, detalhe: 'entre na sua conta' }, 401);
   return c.json(await diagnosticarGeracao(c.env));
+});
+
+// Lista os modelos do Groq que ESTA chave pode usar. Foi assim que o erro
+// "not a valid model ID" virou uma lista concreta de nomes disponiveis.
+app.get('/saude/ia/groq', async (c) => {
+  if (!c.get('user')) return c.json({ ok: false, detalhe: 'entre na sua conta' }, 401);
+  const modelos = await listarModelosGroq(c.env.GROQ_API_KEY);
+  const visao = modelos.filter((m) => /vision|llama-4|qwen|scout|maverick|pixtral/i.test(m));
+
+  // Diagnostico bruto: status e corpo da listagem, e um teste de geracao de
+  // texto. Sem isso, "lista vazia" nao diz se a chave e invalida ou se a
+  // rota esta bloqueada.
+  let statusLista = 0;
+  let corpoLista = '';
+  let statusTexto = 0;
+  let corpoTexto = '';
+  if (c.env.GROQ_API_KEY) {
+    try {
+      const r1 = await fetch('https://api.groq.com/openai/v1/models', {
+        headers: { Authorization: `Bearer ${c.env.GROQ_API_KEY}` },
+      });
+      statusLista = r1.status;
+      corpoLista = (await r1.text()).slice(0, 300);
+
+      const r2 = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${c.env.GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-8b-instant',
+          max_tokens: 8,
+          messages: [{ role: 'user', content: 'Responda apenas: ok' }],
+        }),
+      });
+      statusTexto = r2.status;
+      corpoTexto = (await r2.text()).slice(0, 300);
+    } catch (e) {
+      corpoTexto = e instanceof Error ? e.message.slice(0, 200) : 'falha';
+    }
+  }
+
+  return c.json({
+    ok: modelos.length > 0,
+    total: modelos.length,
+    visao,
+    modelos,
+    statusLista,
+    corpoLista,
+    statusTexto,
+    corpoTexto,
+  });
 });
 
 // Lista os modelos que ESTA chave pode usar. O Google aposenta modelos e o

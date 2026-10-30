@@ -74,6 +74,22 @@ async function analisarComWorkersAi(
   return normalizar(json);
 }
 
+// Lista os modelos que esta chave do Groq pode usar. Foi assim que o erro
+// "not a valid model ID" virou uma lista concreta de nomes.
+export async function listarModelosGroq(chave?: string): Promise<string[]> {
+  if (!chave) return [];
+  try {
+    const r = await fetch('https://api.groq.com/openai/v1/models', {
+      headers: { Authorization: `Bearer ${chave}` },
+    });
+    if (!r.ok) return [];
+    const dados = (await r.json()) as { data?: Array<{ id?: string }> };
+    return (dados.data ?? []).map((m) => String(m.id ?? '')).filter(Boolean).sort();
+  } catch {
+    return [];
+  }
+}
+
 export function iaConfigurada(env: Bindings): boolean {
   // Em demonstracao a analise nao chama API, entao nao exige chave.
   return (
