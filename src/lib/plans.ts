@@ -2,6 +2,8 @@
 // usou no mes corrente. O limite e checado ANTES de chamar a IA, para nao
 // queimar cota de um plano que o aluno nao pagou.
 
+import { MODO_DEMO_LOCAL } from '../ia';
+
 export type Plano = {
   id: number;
   nome: string;
@@ -55,5 +57,6 @@ export async function podeAnalisar(
   const usadas = await analisesNoMes(db, userId);
   const limite = plano.videos_por_mes;
 
-  return { ok: limite === 0 || usadas < limite, plano, usadas, limite };
+  // Em demonstracao o limite nao se aplica: o dono testa a tela inteira.
+  return { ok: MODO_DEMO_LOCAL || limite === 0 || usadas < limite, plano, usadas, limite };
 }

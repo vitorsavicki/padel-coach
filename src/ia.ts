@@ -32,7 +32,8 @@ export class IaFalha extends Error {
 }
 
 export function iaConfigurada(env: Bindings): boolean {
-  return Boolean(env.IA_API_KEY && env.IA_MODEL);
+  // Em demonstracao a analise nao chama API, entao nao exige chave.
+  return MODO_DEMO_LOCAL || Boolean(env.IA_API_KEY && env.IA_MODEL);
 }
 
 // Os quadros chegam como data URL ("data:image/jpeg;base64,...").
@@ -70,11 +71,44 @@ type Tentativa =
   | { ok: true; texto: string }
   | { ok: false; status: number; erro: string };
 
+// Demonstracao local: quando true, a analise NAO chama nenhuma API e devolve
+// um exemplo pronto. Serve para validar a tela inteira (momentos, nota,
+// pontos, treino) enquanto a cota do provedor esta esgotada.
+// Trocar para false volta a chamar o Gemini, sem mexer em mais nada.
+export const MODO_DEMO_LOCAL = true;
+
+function analiseDemo(quantos: number): AnaliseCoach {
+  const n = Math.max(1, Math.min(quantos, 6));
+  const m = (i: number) => `No momento ${Math.min(i, n)}`;
+  return {
+    nota_geral: 7.2,
+    resumo:
+      'Esta e uma analise de DEMONSTRACAO, para voce ver a tela inteira funcionando. ' +
+      'Numa analise real, o coach olha cada momento do seu treino e escreve o que viu.',
+    pontos_fortes: [
+      `${m(1)}, sua base esta firme: pes afastados e joelhos levemente dobrados.`,
+      `${m(2)}, voce fica perto da linha central, que e o lugar certo para cobrir a quadra.`,
+      `${m(4)}, seu olhar ja esta no adversario depois do golpe - isso e leitura de jogo.`,
+    ],
+    pontos_melhorar: [
+      `${m(3)}, a raquete abre cedo demais. Prepare o ombro e mantenha a raquete mais alta.`,
+      `${m(2)}, termine o golpe com a raquete apontando para a frente, na direcao que quer acertar.`,
+      `${m(6)}, dobre um pouco mais os joelhos na troca de bola: da mais controle e menos esforco.`,
+    ],
+    treino_sugerido:
+      'Treino da semana (exemplo): tres series de 10 bandejas com o parceiro na rede. ' +
+      'Prepare o ombro antes da bola quicar, bata e volte um passo ao centro. ' +
+      'Sem smash nesse treino - o foco e a recuperacao, nao a forca.',
+  };
+}
+
 export async function analisarQuadros(
   env: Bindings,
   quadros: string[],
   systemPrompt: string,
 ): Promise<AnaliseCoach> {
+  if (MODO_DEMO_LOCAL) return analiseDemo(quadros.length);
+
   if (!env.IA_API_KEY || !env.IA_MODEL) {
     throw new IaFalha(0, 'IA nao configurada (falta IA_API_KEY ou IA_MODEL)');
   }
