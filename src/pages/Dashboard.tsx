@@ -2,8 +2,8 @@ import type { User } from '../lib/session';
 import { Layout, barraMsg } from './Layout';
 import { Mascote } from './Mascote';
 
-// Painel: a lista de treinos e o centro. Nota grande a esquerda, titulo no
-// meio, acao a direita. No celular tudo empilha e o botao ocupa a largura.
+// Painel: a lista de treinos e o centro. O primeiro quadro do video vira a
+// miniatura, com a nota sobreposta. Apagar sai do proprio card.
 const CSS_DASH = `
 .painel{max-width:940px;margin:0 auto;padding:36px 20px 64px}
 .painel-topo{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:26px}
@@ -41,11 +41,11 @@ const CSS_DASH = `
 .selo.analisado{background:#e8f8ef;color:#14663c}
 .selo.erro{background:#fdecec;color:#8f2626}
 .selo.processando{background:#fff8e1;color:#7a5a00}
+
 .acoes-card{display:flex;align-items:center;gap:8px}
 .apagar{margin:0;display:inline}
 .apagar button{width:34px;height:34px;border-radius:10px;border:1px solid var(--borda);background:#fff;color:#8f2626;font-size:1.15rem;line-height:1;cursor:pointer;font-family:inherit}
 .apagar button:hover{background:#fdecec;border-color:#efb1b1}
-@media (max-width:640px){.acoes-card{grid-column:1 / -1;width:100%;justify-content:flex-end}}
 
 .vazio{text-align:center;padding:34px 18px;background:#fff;border:1px dashed var(--borda);border-radius:18px}
 .vazio p{color:var(--cinza);margin:10px 0 16px}
@@ -56,18 +56,27 @@ const CSS_DASH = `
 
 @media (max-width:640px){
   .painel{padding:24px 16px 48px}
-  .resumo{grid-template-columns:1fr;gap:10px}
-  .bloco-num{display:flex;align-items:center;justify-content:space-between;padding:14px 16px}
-  .bloco-num .rotulo{margin:0}
+  .resumo{grid-template-columns:1fr 1fr;gap:10px}
+  .bloco-num{padding:12px 14px}
   .bloco-num .valor{font-size:1.8rem}
   .treino{grid-template-columns:60px 1fr;gap:12px;padding:12px}
   .nota{width:60px;height:60px;border-radius:16px}
   .nota b{font-size:1.25rem}
-  .treino .btn{grid-column:1 / -1;width:100%;margin-top:4px}
+  .acoes-card{grid-column:1 / -1;width:100%;justify-content:flex-end;margin-top:2px}
+  .acoes-card .btn{flex:1;text-align:center}
 }
 `;
 
 export type PontoEvolucao = { rotulo: string; nota: number };
+
+type VideoItem = {
+  id: number;
+  titulo: string | null;
+  status: string;
+  nota: number | null;
+  enviado_em?: string;
+  quadros?: string | null;
+};
 
 // Primeiro quadro do treino, para usar como miniatura na lista.
 function primeiroQuadro(json?: string | null): string | null {
@@ -82,15 +91,6 @@ function primeiroQuadro(json?: string | null): string | null {
   }
 }
 
-type VideoItem = {
-  id: number;
-  titulo: string | null;
-  status: string;
-  nota: number | null;
-  enviado_em?: string;
-  quadros?: string | null;
-};
-
 const NOMES_STATUS: Record<string, string> = {
   analisado: 'analisado',
   erro: 'falhou',
@@ -102,6 +102,14 @@ function dataCurta(iso?: string): string {
   if (!iso) return '';
   const p = iso.slice(0, 10).split('-');
   return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : iso.slice(0, 10);
+}
+
+// Titulo legivel: "treino" generico vira "Treino de DD/MM".
+function tituloDe(v: VideoItem): string {
+  const t = (v.titulo ?? '').trim();
+  if (t && !/^treino( sem titulo)?$/i.test(t)) return t;
+  const d = dataCurta(v.enviado_em);
+  return d ? `Treino de ${d}` : 'Treino';
 }
 
 function classeSelo(s: string): string {
@@ -186,15 +194,20 @@ export function Dashboard({
                   ? 'nota falhou'
                   : 'nota vazia'
                 : 'nota';
+              const classeMoldura = frame ? `${classeNota} com-foto` : classeNota;
+              const estiloFoto = frame
+                ? `background-image:url(${frame});background-size:cover;background-position:center`
+                : undefined;
+
               return (
                 <article class="treino">
-                  <div class={frame ? classeNota + ' com-foto' : classeNota}
-                  style={frame ? `background-image:url(${frame});background-size:cover;background-position:center` : undefined}></tool_result>
+                  <div class={classeMoldura} style={estiloFoto}>
                     <b>{semNota ? '—' : v.nota!.toFixed(1)}</b>
                     <i>{semNota ? 'sem nota' : 'de 10'}</i>
                   </div>
+
                   <div class="treino-info">
-                    <h3>{v.titulo ?? 'Treino'}</h3>
+                    <h3>{tituloDe(v)}</h3>
                     <div class="meta">
                       <span class={classeSelo(v.status)}>
                         {NOMES_STATUS[v.status] ?? v.status}
@@ -202,9 +215,25 @@ export function Dashboard({
                       {v.enviado_em ? <span>{dataCurta(v.enviado_em)}</span> : null}
                     </div>
                   </div>
-                  <a class="btn btn-sec btn-mini" href={`/videos/${v.id}`}>
-                    {v.status === 'processando' ? 'Acompanhar' : 'Abrir'}
-                  </a>
+
+                  <div class="acoes-card">
+                    <a class="btn btn-sec btn-mini" href={`/videos/${v.id}`}>
+                      {v.status === 'processando' ? 'Acompanhar' : 'Abrir'}
+                    </a>
+                    {csrf ? (
+                      <form class="apagar" method="post" action={`/videos/${v.id}/apagar`}>
+                        <input type="hidden" name="csrf" value={csrf} />
+                        <button
+                          type="submit"
+                          title="Apagar este treino"
+                          aria-label="Apagar este treino"
+                          onclick="return confirm('Apagar este treino? Nao tem como recuperar.')"
+                        >
+                          ×
+                        </button>
+                      </form>
+                    ) : null}
+                  </div>
                 </article>
               );
             })}

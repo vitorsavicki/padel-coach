@@ -147,7 +147,6 @@ app.get('/painel', async (c) => {
       pontos={(pontos.results ?? []).map((p) => ({ rotulo: p.quando, nota: p.nota }))}
       usadas={uso?.n ?? 0}
       csrf={emitirTokenCsrf(c)}
-      csrf={emitirTokenCsrf(c)}
       msg={c.req.query('msg')}
     />,
   );
