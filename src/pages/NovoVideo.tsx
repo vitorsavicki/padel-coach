@@ -47,7 +47,12 @@ export function PaginaNovoVideo({
           </div>
         ) : null}
 
-        <form class="form" method="post" enctype="multipart/form-data">
+        <form
+          class="form"
+          method="post"
+          enctype="multipart/form-data"
+          onsubmit="var b=this.querySelector('button[type=submit]');if(b){b.disabled=true;b.textContent='Analisando... aguarde ate 2 minutos';}"
+        >
           <input type="hidden" name="csrf" value={csrf} />
           <label class="campo">
             <span>Titulo do treino</span>

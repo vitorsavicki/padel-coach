@@ -62,7 +62,14 @@ export async function analisarBytes(
   let ultima: { status: number; erro: string } | null = null;
 
   for (const modelo of modelos) {
-    const r = await chamarGemini(env, modelo, base64, mime, systemPrompt);
+    let r = await chamarGemini(env, modelo, base64, mime, systemPrompt);
+
+    // 503/429 = capacidade temporaria do Google. Uma segunda tentativa no
+    // mesmo modelo resolve a maioria; se nao resolver, tenta o proximo.
+    if (!r.ok && (r.status === 503 || r.status === 429)) {
+      await esperar(1500);
+      r = await chamarGemini(env, modelo, base64, mime, systemPrompt);
+    }
 
     if (r.ok) {
       const json = extrairJSON(r.texto);
@@ -71,7 +78,8 @@ export async function analisarBytes(
     }
 
     ultima = { status: r.status, erro: r.erro };
-    if (r.status !== 404) break;
+    // 404 = modelo aposentado, 503 = modelo saturado: vale o proximo.
+    if (r.status !== 404 && r.status !== 503) break;
   }
 
   throw new IaFalha(ultima?.status ?? 0, ultima?.erro ?? 'falha desconhecida');
@@ -161,6 +169,9 @@ async function chamarGemini(
 // Traduz a resposta do Google para uma instrucao que o jogador entende.
 export function dicaParaErro(motivo: string): string | null {
   const m = motivo.toLowerCase();
+  if (m.includes('503') || m.includes('unavailable') || m.includes('high demand')) {
+    return 'O servico do Google esta sobrecarregado agora. Envie de novo em alguns minutos - costuma passar rapido e seu treino nao fica guardado em lugar nenhum.';
+  }
   if (m.includes('invalid_argument') || m.includes('400')) {
     return 'O Google recusou o formato deste video. Converta para MP4 (H.264) - no iPhone, Ajustes > Camera > Formatos > Mais compativel - e envie de novo.';
   }
@@ -197,6 +208,10 @@ function baseGemini(configurado?: string): string {
 function normalizarModelo(nome: string): string {
   const semPrefixo = nome.includes('/') ? nome.split('/').pop() ?? nome : nome;
   return semPrefixo.trim();
+}
+
+function esperar(ms: number): Promise<void> {
+  return new Promise((res) => setTimeout(res, ms));
 }
 
 // Trecho legivel da resposta de erro do Google, sem nada sensivel.
