@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { exigirLogin, type Vars } from '../lib/session';
 import { emitirTokenCsrf, csrfValido } from '../lib/csrf';
-import { analisarBytes, iaConfigurada } from '../ia';
+import { analisarQuadros, quadrosValidos, iaConfigurada } from '../ia';
 import { podeAnalisar } from '../lib/plans';
 import { COACH_SYSTEM_PROMPT } from '../prompt';
 import type { Bindings } from '../lib/bindings';
@@ -9,10 +9,6 @@ import { PaginaNovoVideo } from '../pages/NovoVideo';
 import { PaginaVideo } from '../pages/Video';
 
 export const rotasVideos = new Hono<{ Bindings: Bindings; Variables: Vars }>();
-
-const TIPOS_OK = new Set(['video/mp4', 'video/quicktime', 'video/x-m4v']);
-// Mesmo teto do Gemini (inline_data): 14MB de video.
-const LIMITE_MB = 14;
 
 export type VideoRow = {
   id: number;
@@ -31,51 +27,6 @@ export type AnaliseRow = {
   treino_sugerido: string | null;
 };
 
-// A analise roda DEPOIS da resposta. Antes ela era aguardada no POST: um
-// clipe de 2 minutos segurava o navegador e estourava o timeout do fetch
-// ("The operation was aborted"). Agora o aluno cai na pagina do treino na
-// hora e ela se atualiza sozinha enquanto o coach assiste.
-async function processarVideo(
-  env: Bindings,
-  videoId: number,
-  userId: number,
-  bytes: Uint8Array,
-  mime: string,
-): Promise<void> {
-  try {
-    const analise = await analisarBytes(env, bytes, mime, COACH_SYSTEM_PROMPT);
-
-    await env.DB.prepare('DELETE FROM analyses WHERE video_id = ?').bind(videoId).run();
-    await env.DB
-      .prepare(
-        `INSERT INTO analyses (video_id, user_id, nota_geral, resumo, pontos_fortes, pontos_melhorar, treino_sugerido, modelo_usado)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .bind(
-        videoId,
-        userId,
-        analise.nota_geral,
-        analise.resumo,
-        JSON.stringify(analise.pontos_fortes),
-        JSON.stringify(analise.pontos_melhorar),
-        analise.treino_sugerido,
-        env.IA_MODEL ?? 'gemini',
-      )
-      .run();
-
-    await env.DB
-      .prepare("UPDATE videos SET status = 'analisado', erro_motivo = NULL WHERE id = ?")
-      .bind(videoId)
-      .run();
-  } catch (e) {
-    const motivo = e instanceof Error ? e.message.slice(0, 300) : 'falha desconhecida';
-    await env.DB
-      .prepare("UPDATE videos SET status = 'erro', erro_motivo = ? WHERE id = ?")
-      .bind(motivo, videoId)
-      .run();
-  }
-}
-
 rotasVideos.get('/novo', (c) => {
   const user = c.get('user');
   const guarda = exigirLogin(user);
@@ -90,7 +41,8 @@ rotasVideos.get('/novo', (c) => {
   );
 });
 
-// Upload + inicio da analise. O video nao e guardado em lugar nenhum.
+// O video NAO sobe. O navegador le o arquivo, extrai 8 quadros e manda so
+// as imagens. O arquivo fica no celular do aluno e a resposta vem rapido.
 rotasVideos.post('/novo', async (c) => {
   const user = c.get('user');
   const guarda = exigirLogin(user);
@@ -100,35 +52,60 @@ rotasVideos.post('/novo', async (c) => {
   if (!csrfValido(c, corpo['csrf'])) return c.redirect('/videos/novo?msg=csrf');
   if (!iaConfigurada(c.env)) return c.redirect('/videos/novo?msg=ia_off');
 
-  const arquivo = corpo['video'];
-  if (!(arquivo instanceof File) || arquivo.size === 0) {
-    return c.redirect('/videos/novo?msg=arquivo');
+  let quadros: unknown = null;
+  try {
+    quadros = JSON.parse(String(corpo['quadros'] ?? '[]'));
+  } catch {
+    quadros = null;
   }
-  if (!TIPOS_OK.has(arquivo.type)) return c.redirect('/videos/novo?msg=tipo');
-  if (arquivo.size > LIMITE_MB * 1024 * 1024) return c.redirect('/videos/novo?msg=tamanho');
+  if (!quadrosValidos(quadros)) return c.redirect('/videos/novo?msg=quadros');
 
   const titulo = String(corpo['titulo'] ?? '').trim().slice(0, 80) || 'Treino sem titulo';
 
-  // Limite do plano e checado ANTES de gastar cota da IA.
   const limite = await podeAnalisar(c.env.DB, user!.id);
   if (!limite.ok) return c.redirect('/videos/novo?msg=limite');
 
   const inserido = await c.env.DB
     .prepare('INSERT INTO videos (user_id, r2_key, titulo, status) VALUES (?, ?, ?, ?)')
-    .bind(user!.id, 'nao-armazenado', titulo, 'processando')
+    .bind(user!.id, 'so-quadros', titulo, 'processando')
     .run();
   const videoId = inserido.meta.last_row_id as number;
 
-  // Os bytes saem do Request agora, porque depois da resposta ele nao existe.
-  const bytes = new Uint8Array(await arquivo.arrayBuffer());
-  const mime = arquivo.type;
+  try {
+    const analise = await analisarQuadros(c.env, quadros, COACH_SYSTEM_PROMPT);
 
-  // Aguardado aqui, nao em waitUntil: depois da resposta o runtime cancela
-  // o fetch de saida e o erro virava "The operation was aborted". O POST
-  // demora, mas o resultado chega.
-  await processarVideo(c.env, videoId, user!.id, bytes, mime);
+    await c.env.DB.prepare('DELETE FROM analyses WHERE video_id = ?').bind(videoId).run();
+    await c.env.DB
+      .prepare(
+        `INSERT INTO analyses (video_id, user_id, nota_geral, resumo, pontos_fortes, pontos_melhorar, treino_sugerido, modelo_usado)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        videoId,
+        user!.id,
+        analise.nota_geral,
+        analise.resumo,
+        JSON.stringify(analise.pontos_fortes),
+        JSON.stringify(analise.pontos_melhorar),
+        analise.treino_sugerido,
+        c.env.IA_MODEL ?? 'gemini',
+      )
+      .run();
 
-  return c.redirect(`/videos/${videoId}`);
+    await c.env.DB
+      .prepare("UPDATE videos SET status = 'analisado', erro_motivo = NULL WHERE id = ?")
+      .bind(videoId)
+      .run();
+
+    return c.redirect(`/videos/${videoId}?msg=analisado`);
+  } catch (e) {
+    const motivo = e instanceof Error ? e.message.slice(0, 300) : 'falha desconhecida';
+    await c.env.DB
+      .prepare("UPDATE videos SET status = 'erro', erro_motivo = ? WHERE id = ?")
+      .bind(motivo, videoId)
+      .run();
+    return c.redirect(`/videos/${videoId}?msg=erro_ia`);
+  }
 });
 
 rotasVideos.get('/:id', async (c) => {
@@ -164,21 +141,6 @@ rotasVideos.get('/:id', async (c) => {
   );
 });
 
-// Refazer a analise de um treino que ja existe.
-rotasVideos.post('/:id/reanalisar', async (c) => {
-  const user = c.get('user');
-  const guarda = exigirLogin(user);
-  if (guarda) return guarda;
-
-  const id = Number(c.req.param('id'));
-  const corpo = await c.req.parseBody();
-  if (!csrfValido(c, corpo['csrf'])) return c.redirect(`/videos/${id}?msg=csrf`);
-
-  // Sem o arquivo guardado nao ha o que reanalisar: manda enviar de novo.
-  return c.redirect('/videos/novo?msg=reenviar');
-});
-
-// Apagar: sem arquivo guardado, some o registro e a analise.
 rotasVideos.post('/:id/apagar', async (c) => {
   const user = c.get('user');
   if (!user) return c.redirect('/entrar');

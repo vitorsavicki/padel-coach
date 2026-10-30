@@ -105,7 +105,7 @@ export function Home({ user, msg }: { user: User | null; msg?: string }) {
           <section class="hero">
             <div class="wrap">
               {barraMsg(msg)}
-              <span class="selo-hero"><BolaPadel size={16} /> Analise de treino com IA - sem instalar nada</span>
+              <span class="selo-hero"><BolaPadel size={16} /> Analise do seu treino em minutos, direto do celular</span>
               <h1>
                 Seu coach de padel<br />na palma da mao, com <em>inteligencia artificial</em>.
               </h1>
