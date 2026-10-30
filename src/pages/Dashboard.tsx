@@ -30,6 +30,9 @@ const CSS_DASH = `
 .nota i{font-style:normal;font-size:.62rem;font-weight:700;opacity:.75;margin-top:3px;letter-spacing:.04em;text-transform:uppercase}
 .nota.vazia{background:#f1f5f3;color:#94a8a1}
 .nota.falhou{background:#fdecec;color:#8f2626}
+.nota.com-foto{background-size:cover;background-position:center;border:2px solid #fff;box-shadow:0 0 0 1px var(--borda)}
+.nota.com-foto b,.nota.com-foto i{background:rgba(255,255,255,.94);color:#0a4f4a;border-radius:999px;padding:1px 7px}
+.nota.com-foto i{margin-top:3px;opacity:1}
 
 .treino-info{min-width:0}
 .treino-info h3{margin:0 0 6px;font-size:1.02rem;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -38,6 +41,11 @@ const CSS_DASH = `
 .selo.analisado{background:#e8f8ef;color:#14663c}
 .selo.erro{background:#fdecec;color:#8f2626}
 .selo.processando{background:#fff8e1;color:#7a5a00}
+.acoes-card{display:flex;align-items:center;gap:8px}
+.apagar{margin:0;display:inline}
+.apagar button{width:34px;height:34px;border-radius:10px;border:1px solid var(--borda);background:#fff;color:#8f2626;font-size:1.15rem;line-height:1;cursor:pointer;font-family:inherit}
+.apagar button:hover{background:#fdecec;border-color:#efb1b1}
+@media (max-width:640px){.acoes-card{grid-column:1 / -1;width:100%;justify-content:flex-end}}
 
 .vazio{text-align:center;padding:34px 18px;background:#fff;border:1px dashed var(--borda);border-radius:18px}
 .vazio p{color:var(--cinza);margin:10px 0 16px}
@@ -61,12 +69,26 @@ const CSS_DASH = `
 
 export type PontoEvolucao = { rotulo: string; nota: number };
 
+// Primeiro quadro do treino, para usar como miniatura na lista.
+function primeiroQuadro(json?: string | null): string | null {
+  if (!json) return null;
+  try {
+    const v = JSON.parse(json);
+    if (!Array.isArray(v)) return null;
+    const q = v.find((x) => typeof x === 'string' && x.startsWith('data:image/'));
+    return typeof q === 'string' ? q : null;
+  } catch {
+    return null;
+  }
+}
+
 type VideoItem = {
   id: number;
   titulo: string | null;
   status: string;
   nota: number | null;
   enviado_em?: string;
+  quadros?: string | null;
 };
 
 const NOMES_STATUS: Record<string, string> = {
@@ -94,6 +116,7 @@ export function Dashboard({
   videos,
   pontos,
   usadas,
+  csrf,
   msg,
 }: {
   user: User;
@@ -157,6 +180,7 @@ export function Dashboard({
           <div class="treinos">
             {videos.map((v) => {
               const semNota = v.nota === null;
+              const frame = primeiroQuadro(v.quadros);
               const classeNota = semNota
                 ? v.status === 'erro'
                   ? 'nota falhou'
@@ -164,7 +188,8 @@ export function Dashboard({
                 : 'nota';
               return (
                 <article class="treino">
-                  <div class={classeNota}>
+                  <div class={frame ? classeNota + ' com-foto' : classeNota}
+                  style={frame ? `background-image:url(${frame});background-size:cover;background-position:center` : undefined}></tool_result>
                     <b>{semNota ? '—' : v.nota!.toFixed(1)}</b>
                     <i>{semNota ? 'sem nota' : 'de 10'}</i>
                   </div>
