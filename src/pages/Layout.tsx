@@ -7,10 +7,13 @@ export const CSS_BASE = `
   --tinta:#0a1f1a; --fundo:#f2f8f5; --papel:#ffffff;
   --quadra:#0f766e; --quadra-esc:#0a4f4a; --quadra-clara:#ccfbf1;
   --bola:#d9f24a; --cinza:#5b716b; --borda:#d7e5df;
+  --sombra-1:0 1px 2px rgba(10,31,26,.05);
+  --sombra-2:0 14px 30px -22px rgba(10,31,26,.45);
+  --raio:16px;
 }
 *{box-sizing:border-box;margin:0}
 html{scroll-behavior:smooth}
-body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--tinta);background:var(--fundo);line-height:1.55;-webkit-font-smoothing:antialiased}
+body{font-family:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--tinta);background:var(--fundo);line-height:1.55;-webkit-font-smoothing:antialiased}
 a{color:inherit}
 .wrap{max-width:1040px;margin:0 auto;padding:0 20px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 24px;border-radius:12px;font-weight:700;text-decoration:none;border:0;cursor:pointer;font-size:1rem;font-family:inherit;transition:transform .15s ease,box-shadow .15s ease}
@@ -48,10 +51,19 @@ a{color:inherit}
 .flash{background:#fff8e1;border:1px solid #ecd27a;color:#7a5a00;padding:11px 15px;border-radius:10px;font-size:.93rem;margin-bottom:18px}
 .flash.ok{background:#e8f8ef;border-color:#9fd9b8;color:#14663c}
 .flash.erro{background:#fdecec;border-color:#efb1b1;color:#8f2626}
-footer{text-align:center;color:#7d938c;font-size:.85rem;padding:34px 20px;border-top:1px solid var(--borda);margin-top:40px}
-footer a{color:#5b716b}
+footer{border-top:1px solid var(--borda);margin-top:56px;background:#fff}
+.rodape{max-width:1040px;margin:0 auto;padding:36px 20px 28px;display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:28px}
+.rodape h4{font-size:.76rem;letter-spacing:.08em;text-transform:uppercase;color:#7d938c;margin-bottom:10px}
+.rodape .marca{display:flex;align-items:center;gap:9px;font-weight:800;margin-bottom:8px}
+.rodape p{color:#5b716b;font-size:.88rem;max-width:290px}
+.rodape ul{list-style:none;padding:0;margin:0;display:grid;gap:7px}
+.rodape a{color:#2c4740;text-decoration:none;font-size:.9rem;font-weight:600}
+.rodape a:hover{color:var(--quadra)}
+.rodape-base{border-top:1px solid var(--borda);padding:16px 20px;text-align:center;color:#94a8a1;font-size:.82rem}
+@media (max-width:640px){.rodape{grid-template-columns:1fr;gap:22px;padding:28px 20px}}
 @media (max-width:640px){
-  .topo nav{gap:12px}
+  .topo .wrap{flex-wrap:wrap;gap:8px}
+  .topo nav{gap:10px;flex-wrap:wrap}
   .topo nav a{font-size:.86rem}
   .pagina{padding:32px 16px 48px}
   .sec{padding:40px 0}
@@ -133,6 +145,12 @@ export function Layout({ titulo, descricao, user, corpo, children, cssExtra }: P
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="Padel Coach IA" />
         <meta name="twitter:card" content="summary" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap"
+        />
         <style>{CSS_BASE}{cssExtra ?? ''}</style>
       </head>
       <body>
@@ -160,7 +178,29 @@ export function Layout({ titulo, descricao, user, corpo, children, cssExtra }: P
         </header>
         {corpo ?? children}
         <footer>
-          Padel Coach IA - feito para quem joga por amor a quadra. <a href="/privacidade">Privacidade</a>
+          <div class="rodape">
+            <div>
+              <div class="marca"><BolaPadel size={20} /> Padel Coach IA</div>
+              <p>Seu treino na quadra, analisado por IA. Nota, pontos fortes e o treino da semana.</p>
+            </div>
+            <div>
+              <h4>Produto</h4>
+              <ul>
+                <li><a href="/exemplo">Ver exemplo</a></li>
+                <li><a href="/planos">Planos</a></li>
+                <li><a href="/videos/novo">Enviar video</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4>Conta e dados</h4>
+              <ul>
+                <li><a href="/cadastro">Criar conta</a></li>
+                <li><a href="/entrar">Entrar</a></li>
+                <li><a href="/privacidade">Privacidade (LGPD)</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="rodape-base">Padel Coach IA - feito para quem joga por amor a quadra.</div>
         </footer>
       </body>
     </html>
