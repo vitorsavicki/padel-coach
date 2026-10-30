@@ -44,6 +44,28 @@ export function quadrosValidos(valor: unknown): valor is string[] {
   );
 }
 
+// Pergunta a API quais modelos esta chave pode usar. O Google aposenta
+// modelos e o nome valido muda; perguntar e mais confiavel que chutar.
+export async function listarModelos(env: Bindings): Promise<string[]> {
+  if (!env.IA_API_KEY) return [];
+  const base = baseGemini(env.IA_BASE_URL);
+  try {
+    const r = await fetch(`${base}/models?pageSize=1000`, {
+      headers: { 'x-goog-api-key': env.IA_API_KEY as string },
+    });
+    if (!r.ok) return [];
+    const dados = (await r.json()) as {
+      models?: Array<{ name?: string; supportedGenerationMethods?: string[] }>;
+    };
+    return (dados.models ?? [])
+      .filter((m) => (m.supportedGenerationMethods ?? []).includes('generateContent'))
+      .map((m) => String(m.name ?? '').replace(/^models\//, ''))
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 type Tentativa =
   | { ok: true; texto: string }
   | { ok: false; status: number; erro: string };
@@ -92,6 +114,23 @@ export async function analisarQuadros(
 
     ultima = { status: r.status, erro: r.erro };
     if (r.status !== 404 && r.status !== 503) break;
+  }
+
+  // Ultimo recurso: a lista de modelos vivos desta chave, filtrada para
+  // os Flash (visao), tentando os que ainda nao foram usados.
+  if (ultima?.status === 404) {
+    const vivos = await listarModelos(env);
+    const candidatos = vivos
+      .filter((m) => /flash/i.test(m) && !/embedding|tts|image|vision/i.test(m))
+      .filter((m) => !modelos.includes(m))
+      .slice(0, 3);
+    for (const m of candidatos) {
+      const r = await chamarGemini(env, m, partes, systemPrompt, true);
+      if (r.ok) {
+        const json = extrairJSON(r.texto);
+        if (json) return normalizar(json);
+      }
+    }
   }
 
   throw new IaFalha(

@@ -9,7 +9,7 @@ import { Home } from './pages/Home';
 import { Dashboard } from './pages/Dashboard';
 import { PaginaPrivacidade } from './pages/Privacidade';
 import { PaginaExemplo } from './pages/Exemplo';
-import { diagnosticarIa, diagnosticarGeracao } from './ia';
+import { diagnosticarIa, diagnosticarGeracao, listarModelos } from './ia';
 
 export type { Bindings } from './lib/bindings';
 
@@ -31,6 +31,14 @@ app.get('/saude/ia', async (c) => {
 app.get('/saude/ia/gerar', async (c) => {
   if (!c.get('user')) return c.json({ ok: false, detalhe: 'entre na sua conta' }, 401);
   return c.json(await diagnosticarGeracao(c.env));
+});
+
+// Lista os modelos que ESTA chave pode usar. O Google aposenta modelos e o
+// nome valido muda; perguntar a API e mais confiavel que chutar.
+app.get('/saude/ia/modelos', async (c) => {
+  if (!c.get('user')) return c.json({ ok: false, detalhe: 'entre na sua conta' }, 401);
+  const modelos = await listarModelos(c.env);
+  return c.json({ ok: modelos.length > 0, total: modelos.length, modelos });
 });
 
 app.get('/', (c) => c.html(<Home user={c.get('user')} msg={c.req.query('msg')} />));
