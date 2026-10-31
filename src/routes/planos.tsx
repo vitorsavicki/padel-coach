@@ -4,6 +4,7 @@ import { emitirTokenCsrf, csrfValido } from '../lib/csrf';
 import type { Bindings } from '../lib/bindings';
 import { planoAtual, analisesNoMes, type Plano } from '../lib/plans';
 import { PaginaPlanos } from '../pages/Planos';
+import { Layout } from '../pages/Layout';
 
 export const rotasPlanos = new Hono<{ Bindings: Bindings; Variables: Vars }>();
 
@@ -93,6 +94,88 @@ rotasPlanos.post('/:id/assinar', async (c) => {
   if (!dados.init_point) return c.redirect('/planos?msg=falhou');
 
   return c.redirect(dados.init_point);
+});
+
+// Quando nao ha token do Mercado Pago, oferece um pagamento SIMULADO para
+// testar o fluxo completo (assinatura ativa = videos_por_mes=20 no Atleta).
+rotasPlanos.get('/simular/:id', async (c) => {
+  const user = c.get('user');
+  if (!user) return c.redirect('/entrar?msg=sessao');
+
+  const corpo = await c.req.parseBody();
+  if (!csrfValido(c, corpo['csrf'])) return c.redirect('/planos?msg=csrf');
+
+  const planoId = Number(c.req.param('id'));
+  if (!Number.isInteger(planoId)) return c.redirect('/planos?msg=plano_invalido');
+
+  const plano = await c.env.DB
+    .prepare('SELECT id, nome, preco_centavos, videos_por_mes FROM plans WHERE id = ? AND ativo = 1')
+    .bind(planoId)
+    .first<Plano>();
+  if (!plano) return c.redirect('/planos?msg=plano_invalido');
+  if (plano.preco_centavos === 0) return c.redirect('/planos?msg=grato');
+
+  const csrf = emitirTokenCsrf(c);
+  return c.html(
+    <Layout
+      titulo="Simular pagamento - Padel Coach IA"
+      user={user}
+      descricao="Modo de teste: confirme o pagamento simulado para ativar sua assinatura."
+    >
+      <section class="planos">
+        <h1>Simular pagamento</h1>
+        <p class="sub">Este e um teste sem cobranca real. Confirme para ativar o plano <strong>{plano.nome}</strong>.</p>
+        <div class="card plano">
+          <h3>{plano.nome}</h3>
+          <div class="preco">R$ {(plano.preco_centavos / 100).toFixed(2).replace('.', ',')}</div>
+          <ul>
+            <li>PIX ou cartao (simulado)</li>
+            <li>{plano.videos_por_mes === 0 ? 'Analises ilimitadas' : `${plano.videos_por_mes} analises por mes`}</li>
+          </ul>
+          <form method="post" action={`/planos/simular/${plano.id}/confirmar`}>
+            <input type="hidden" name="csrf" value={csrf} />
+            <button class="btn btn-pri btn-largo" type="submit">Confirmar pagamento simulado</button>
+          </form>
+        </div>
+        <p class="troca"><a href="/planos">Voltar para os planos</a></p>
+      </section>
+    </Layout>
+  );
+});
+
+rotasPlanos.post('/simular/:id/confirmar', async (c) => {
+  const user = c.get('user');
+  if (!user) return c.redirect('/entrar?msg=sessao');
+
+  const corpo = await c.req.parseBody();
+  if (!csrfValido(c, corpo['csrf'])) return c.redirect('/planos?msg=csrf');
+
+  const planoId = Number(c.req.param('id'));
+  if (!Number.isInteger(planoId)) return c.redirect('/planos?msg=plano_invalido');
+
+  const plano = await c.env.DB
+    .prepare('SELECT id, nome, preco_centavos, videos_por_mes FROM plans WHERE id = ? AND ativo = 1')
+    .bind(planoId)
+    .first<Plano>();
+  if (!plano) return c.redirect('/planos?msg=plano_invalido');
+  if (plano.preco_centavos === 0) return c.redirect('/planos?msg=grato');
+
+  const renova = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString();
+
+  await c.env.DB
+    .prepare("UPDATE subscriptions SET status = 'vencido' WHERE user_id = ? AND status = 'ativo'")
+    .bind(user.id)
+    .run();
+
+  await c.env.DB
+    .prepare(
+      `INSERT INTO subscriptions (user_id, plan_id, status, mp_payment_id, renova_em)
+       VALUES (?, ?, 'ativo', ?, ?)`,
+    )
+    .bind(user.id, planoId, `simulado-${Date.now()}`, renova)
+    .run();
+
+  return c.redirect('/planos?msg=pago');
 });
 
 export const rotasWebhooks = new Hono<{ Bindings: Bindings; Variables: Vars }>();

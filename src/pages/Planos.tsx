@@ -103,7 +103,10 @@ export function PaginaPlanos({
                 ) : !user ? (
                   <a class="btn btn-pri btn-largo" href="/cadastro">Criar conta para assinar</a>
                 ) : !mpAtivo ? (
-                  <span class="embreve">Pagamento em breve</span>
+                  <form method="post" action={`/planos/simular/${p.id}`}>
+                    <input type="hidden" name="csrf" value={csrf} />
+                    <button class="btn btn-pri btn-largo" type="submit">Assinar {p.nome} (simulado)</button>
+                  </form>
                 ) : eAtual ? (
                   <span class="embreve">Plano ativo</span>
                 ) : (
