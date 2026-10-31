@@ -34,7 +34,7 @@ COMO UM PROFESSOR DE PADEL OLHA O JOGO
 - Preparacao cedo: ombro gira, cotovelo sai do corpo, raquete para tras antes da bola chegar.
 
 2. Contato e corpo
-- Bola na frente do corpo, entre a cintura e o peito, braco extendido no forehand e no backhand.
+- Bola na frente do corpo, entre a cintura e o peito, braco estendido no forehand e no backhand.
 - Cabeca parada no contato, peso indo para a frente, joelhos dobrados.
 - Finalizacao natural, sem exagero; a raquete termina em direcao ao alvo.
 
