@@ -9,7 +9,14 @@ import { Home } from './pages/Home';
 import { Dashboard } from './pages/Dashboard';
 import { PaginaPrivacidade } from './pages/Privacidade';
 import { PaginaExemplo } from './pages/Exemplo';
-import { diagnosticarIa, diagnosticarGeracao, listarModelos, listarModelosGroq } from './ia';
+import {
+  diagnosticarIa,
+  diagnosticarGeracao,
+  listarModelos,
+  listarModelosGroq,
+  statusProvedores,
+  testarProvedores,
+} from './ia';
 
 export type { Bindings } from './lib/bindings';
 
@@ -96,6 +103,27 @@ app.get('/saude/ia/modelos', async (c) => {
   if (!c.get('user')) return c.json({ ok: false, detalhe: 'entre na sua conta' }, 401);
   const modelos = await listarModelos(c.env);
   return c.json({ ok: modelos.length > 0, total: modelos.length, modelos });
+});
+
+// Diz quais provedores estao com chave (sem chamar API). Util depois de
+// configurar os secrets para conferir se o Worker enxergou cada um.
+app.get('/saude/ia/provedores', (c) => {
+  if (!c.get('user')) return c.json({ ok: false, detalhe: 'entre na sua conta' }, 401);
+  return c.json({ ok: true, ...statusProvedores(c.env) });
+});
+
+// Teste leve das alternativas extras (OpenRouter, Mistral, GitHub Models).
+// Nao manda imagem: confirma chave + modelo com uma geracao de 8 tokens.
+app.get('/saude/ia/testar', async (c) => {
+  if (!c.get('user')) return c.json({ ok: false, detalhe: 'entre na sua conta' }, 401);
+  const resultados = await testarProvedores(c.env);
+  return c.json({
+    ok: resultados.length > 0 && resultados.every((r) => r.ok),
+    configurados: resultados.length,
+    resultados,
+    observacao:
+      'Testa so as alternativas extras. Groq, Workers AI e Gemini tem testes proprios.',
+  });
 });
 
 app.get('/', (c) => c.html(<Home user={c.get('user')} msg={c.req.query('msg')} />));

@@ -10,6 +10,20 @@ IA_MODEL=gemini-2.5-flash
 # Opcional - so mude se quiser outro endpoint compativel.
 # IA_BASE_URL=https://generativelanguage.googleapis.com/v1beta
 
+# Groq gratis (sem cartao): https://console.groq.com/keys
+# GROQ_API_KEY=gsk_...
+
+# Alternativas gratis (API compativel com OpenAI). Ative so as que tiver.
+# OpenRouter: https://openrouter.ai/keys
+# OPENROUTER_API_KEY=sk-or-...
+# OPENROUTER_MODEL=google/gemma-4-31b-it:free
+# Mistral: https://console.mistral.ai/api-keys (plano Experiment pede telefone)
+# MISTRAL_API_KEY=...
+# MISTRAL_MODEL=ministral-8b-2512
+# GitHub Models: https://github.com/settings/tokens (PAT com models:read)
+# GITHUB_MODELS_TOKEN=github_pat_...
+# GITHUB_MODEL=openai/gpt-4o
+
 # Mercado Pago (opcional; sem isso /planos mostra "pagamento em breve")
 MP_ACCESS_TOKEN=token-do-mercado-pago
 

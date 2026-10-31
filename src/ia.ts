@@ -117,8 +117,103 @@ export function iaConfigurada(env: Bindings): boolean {
     MODO_DEMO_LOCAL ||
     Boolean(env.GROQ_API_KEY) ||
     Boolean(env.AI) ||
+    Boolean(env.OPENROUTER_API_KEY) ||
+    Boolean(env.MISTRAL_API_KEY) ||
+    Boolean(env.GITHUB_MODELS_TOKEN) ||
     Boolean(env.IA_API_KEY && env.IA_MODEL)
   );
+}
+
+export type StatusProvedores = {
+  groq: boolean;
+  workersAi: boolean;
+  openrouter: boolean;
+  mistral: boolean;
+  githubModels: boolean;
+  gemini: boolean;
+  modelos: {
+    openrouter: string;
+    mistral: string;
+    githubModels: string;
+    gemini: string;
+  };
+};
+
+// Mostra quais provedores estao com chave, sem chamar nenhuma API. Serve para
+// conferir a configuracao depois de rodar `wrangler secret put`.
+export function statusProvedores(env: Bindings): StatusProvedores {
+  return {
+    groq: Boolean(env.GROQ_API_KEY),
+    workersAi: Boolean(env.AI),
+    openrouter: Boolean(env.OPENROUTER_API_KEY),
+    mistral: Boolean(env.MISTRAL_API_KEY),
+    githubModels: Boolean(env.GITHUB_MODELS_TOKEN),
+    gemini: Boolean(env.IA_API_KEY && env.IA_MODEL),
+    modelos: {
+      openrouter: env.OPENROUTER_MODEL?.trim() || OPENROUTER_MODELO,
+      mistral: env.MISTRAL_MODEL?.trim() || MISTRAL_MODELO,
+      githubModels: env.GITHUB_MODEL?.trim() || GITHUB_MODELO,
+      gemini: env.IA_MODEL ? normalizarModelo(env.IA_MODEL) : '',
+    },
+  };
+}
+
+export type TesteProvedor = {
+  nome: string;
+  modelo: string;
+  ok: boolean;
+  status: number;
+  ms: number;
+  detalhe: string;
+};
+
+// Teste leve (texto, 8 tokens) para confirmar chave + modelo sem gastar
+// uma analise de imagens. Roda so nas alternativas extras configuradas.
+async function testarCompat(provedor: ProvedorCompat): Promise<TesteProvedor> {
+  const inicio = Date.now();
+  const controlador = new AbortController();
+  const timer = setTimeout(() => controlador.abort(), 20_000);
+
+  try {
+    const r = await fetch(provedor.url, {
+      method: 'POST',
+      signal: controlador.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${provedor.chave.trim()}`,
+        ...provedor.headers,
+      },
+      body: JSON.stringify({
+        model: provedor.modelo,
+        max_tokens: 8,
+        messages: [{ role: 'user', content: 'Responda apenas: ok' }],
+      }),
+    });
+    const corpo = await r.text();
+    return {
+      nome: provedor.nome,
+      modelo: provedor.modelo,
+      ok: r.ok,
+      status: r.status,
+      ms: Date.now() - inicio,
+      detalhe: r.ok ? 'chave e modelo responderam' : limparErro(corpo).slice(0, 160),
+    };
+  } catch (e) {
+    return {
+      nome: provedor.nome,
+      modelo: provedor.modelo,
+      ok: false,
+      status: 0,
+      ms: Date.now() - inicio,
+      detalhe: e instanceof Error ? e.message.slice(0, 160) : 'falha de rede',
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export async function testarProvedores(env: Bindings): Promise<TesteProvedor[]> {
+  return Promise.all(provedoresCompat(env).map(testarCompat));
 }
 
 // Os quadros chegam como data URL ("data:image/jpeg;base64,...").
@@ -204,6 +299,158 @@ const GROQ_MODELOS = [
   'meta-llama/llama-4-maverick-17b-128e-instruct',
 ];
 
+// Alternativas gratis com API compativel com OpenAI (chat/completions).
+// OpenRouter: modelos ":free" com visao. Mistral: plano Experiment (pede
+// telefone). GitHub Models: PAT gratis com escopo models:read.
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const OPENROUTER_MODELO = 'google/gemma-4-31b-it:free';
+const MISTRAL_URL = 'https://api.mistral.ai/v1/chat/completions';
+const MISTRAL_MODELO = 'ministral-8b-2512';
+const GITHUB_MODELS_URL = 'https://models.github.ai/inference/chat/completions';
+const GITHUB_MODELO = 'openai/gpt-4o';
+
+type FormatoImagem = 'openai' | 'mistral';
+
+type ProvedorCompat = {
+  nome: string;
+  url: string;
+  chave: string;
+  modelo: string;
+  formato: FormatoImagem;
+  headers?: Record<string, string>;
+};
+
+type ConteudoCompat =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: string | { url: string } };
+
+function textoDaResposta(valor: unknown): string {
+  if (typeof valor === 'string') return valor;
+  if (Array.isArray(valor)) {
+    return valor
+      .map((parte) => {
+        if (parte && typeof parte === 'object' && 'text' in parte) {
+          return String((parte as { text?: unknown }).text ?? '');
+        }
+        return '';
+      })
+      .join('');
+  }
+  return '';
+}
+
+// Chama OpenRouter, Mistral ou GitHub Models. Todos devolvem o mesmo
+// choices[0].message.content do padrao OpenAI; so o formato da imagem muda
+// (Mistral usa image_url como string, os outros como objeto).
+async function analisarComCompat(
+  provedor: ProvedorCompat,
+  quadros: string[],
+  systemPrompt: string,
+): Promise<AnaliseCoach> {
+  const conteudo: ConteudoCompat[] = [
+    { type: 'text', text: 'Estes sao os momentos do treino, em ordem. Analise.' },
+    ...quadros.slice(0, 4).map(
+      (q): ConteudoCompat =>
+        provedor.formato === 'mistral'
+          ? { type: 'image_url', image_url: q }
+          : { type: 'image_url', image_url: { url: q } },
+    ),
+  ];
+
+  const controlador = new AbortController();
+  const timer = setTimeout(() => controlador.abort(), 45_000);
+
+  try {
+    const r = await fetch(provedor.url, {
+      method: 'POST',
+      signal: controlador.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${provedor.chave.trim()}`,
+        ...provedor.headers,
+      },
+      body: JSON.stringify({
+        model: provedor.modelo,
+        temperature: 0,
+        max_tokens: 1400,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: conteudo },
+        ],
+      }),
+    });
+
+    const corpo = await r.text();
+    if (!r.ok) {
+      throw new IaFalha(r.status, `${provedor.nome}: ${limparErro(corpo)}`);
+    }
+
+    const dados = JSON.parse(corpo) as {
+      choices?: Array<{ message?: { content?: unknown } }>;
+    };
+    const saida = textoDaResposta(dados.choices?.[0]?.message?.content);
+    const json = extrairJSON(saida);
+    if (!json) {
+      throw new IaFalha(
+        0,
+        `${provedor.nome}: respondeu sem JSON (${saida.slice(0, 90)})`,
+      );
+    }
+    return normalizar(json);
+  } catch (e) {
+    if (e instanceof IaFalha) throw e;
+    throw new IaFalha(
+      0,
+      `${provedor.nome}: ${e instanceof Error ? e.message.slice(0, 120) : 'falha'}`,
+    );
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Lista so as alternativas que tem chave configurada. A ordem e a de
+// tentativa: OpenRouter, Mistral, GitHub Models.
+function provedoresCompat(env: Bindings): ProvedorCompat[] {
+  const lista: ProvedorCompat[] = [];
+
+  if (env.OPENROUTER_API_KEY) {
+    lista.push({
+      nome: 'OpenRouter',
+      url: OPENROUTER_URL,
+      chave: env.OPENROUTER_API_KEY,
+      modelo: env.OPENROUTER_MODEL?.trim() || OPENROUTER_MODELO,
+      formato: 'openai',
+      headers: {
+        'HTTP-Referer': 'https://padel-coach.vitorsavicki.workers.dev',
+        'X-Title': 'Padel Coach IA',
+      },
+    });
+  }
+
+  if (env.MISTRAL_API_KEY) {
+    lista.push({
+      nome: 'Mistral',
+      url: MISTRAL_URL,
+      chave: env.MISTRAL_API_KEY,
+      modelo: env.MISTRAL_MODEL?.trim() || MISTRAL_MODELO,
+      formato: 'mistral',
+    });
+  }
+
+  if (env.GITHUB_MODELS_TOKEN) {
+    lista.push({
+      nome: 'GitHub Models',
+      url: GITHUB_MODELS_URL,
+      chave: env.GITHUB_MODELS_TOKEN,
+      modelo: env.GITHUB_MODEL?.trim() || GITHUB_MODELO,
+      formato: 'openai',
+      headers: { Accept: 'application/json' },
+    });
+  }
+
+  return lista;
+}
+
 async function analisarComGroq(
   env: Bindings,
   quadros: string[],
@@ -273,11 +520,12 @@ export async function analisarQuadros(
 ): Promise<AnaliseCoach> {
   if (MODO_DEMO_LOCAL) return analiseDemo(quadros.length);
 
-  // Workers AI primeiro: mesma conta, sem chave, cota separada do Gemini.
-  // Cada provedor entra em try/catch: a falha de um nao pode encerrar a
-  // analise quando outro ainda pode responder. Antes, o Groq (sem nenhum
-  // modelo de visao nesta conta) bloqueava o Gemini.
+  // Ordem: Groq (se tiver) -> Workers AI (sempre) -> OpenRouter/Mistral/
+  // GitHub Models (se tiverem chave) -> Gemini (se tiver). Cada provedor
+  // entra em try/catch: a falha de um nao pode encerrar a analise quando
+  // outro ainda pode responder.
   const falhas: string[] = [];
+  const extras = provedoresCompat(env);
 
   if (env.GROQ_API_KEY) {
     try {
@@ -291,15 +539,28 @@ export async function analisarQuadros(
     try {
       return await analisarComWorkersAi(env, quadros, systemPrompt);
     } catch (e) {
-      // Se falhar e houver chave do Gemini, ainda vale tentar o Gemini.
-      // Acumula e segue: a falha do Workers AI (licenca da Meta) nao pode
-      // impedir o Gemini de responder. O erro final lista as tres razoes.
+      // Acumula e segue: a falha do Workers AI nao pode impedir as
+      // alternativas gratis nem o Gemini de responder.
       falhas.push(e instanceof Error ? e.message.slice(0, 120) : 'workers ai falhou');
     }
   }
 
+  for (const provedor of extras) {
+    try {
+      return await analisarComCompat(provedor, quadros, systemPrompt);
+    } catch (e) {
+      falhas.push(
+        `${provedor.nome}: ${e instanceof Error ? e.message.slice(0, 120) : 'falhou'}`,
+      );
+    }
+  }
+
   if (!env.IA_API_KEY || !env.IA_MODEL) {
-    throw new IaFalha(0, 'IA nao configurada (falta IA_API_KEY ou IA_MODEL)');
+    const tentados = ['Groq', 'Workers AI', ...extras.map((p) => p.nome)];
+    throw new IaFalha(
+      0,
+      `Nenhum provedor de IA respondeu. Tentamos: ${tentados.join(', ')}. Tente de novo em alguns minutos.`,
+    );
   }
 
   const partes = quadros.map((dataUrl) => {

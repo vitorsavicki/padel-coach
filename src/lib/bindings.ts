@@ -13,6 +13,14 @@ export type Bindings = {
   GROQ_API_KEY?: string;
   // Workers AI: roda na mesma conta, sem chave e sem cartao.
   AI?: Ai;
+  // Alternativas gratis (APIs compativeis com OpenAI). Cada uma so entra
+  // quando a chave existir; sem chave, o app ignora.
+  OPENROUTER_API_KEY?: string;
+  OPENROUTER_MODEL?: string;
+  MISTRAL_API_KEY?: string;
+  MISTRAL_MODEL?: string;
+  GITHUB_MODELS_TOKEN?: string;
+  GITHUB_MODEL?: string;
   // Mercado Pago: sem o token, /planos mostra "pagamento em breve".
   MP_ACCESS_TOKEN?: string;
 };
