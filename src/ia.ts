@@ -176,6 +176,9 @@ function chaveGroq(env: Bindings): string {
 // Meta (llama-4) aceitam varias imagens numa mensagem so.
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_MODELOS = [
+  // Unico modelo de visao disponivel nesta conta Groq (ver /saude/ia/groq).
+  // Os llama-4 abaixo ficam como reserva caso a conta ganhe acesso.
+  'qwen/qwen3.8-27b',
   'meta-llama/llama-4-scout-17b-16e-instruct',
   'meta-llama/llama-4-maverick-17b-128e-instruct',
 ];
@@ -312,7 +315,9 @@ export async function analisarQuadros(
     }
 
     ultima = { status: r.status, erro: r.erro };
-    if (r.status !== 404 && r.status !== 503) break;
+    // Abort por tempo (status 0) tambem deve cair pro proximo modelo da
+    // lista: antes, o break impedia os modelos reserva de rodarem.
+    if (r.status !== 0 && r.status !== 404 && r.status !== 503) break;
   }
 
   // Ultimo recurso: a lista de modelos vivos desta chave, filtrada para
