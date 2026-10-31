@@ -16,7 +16,7 @@ IA_MODEL=gemini-2.5-flash
 # Alternativas gratis (API compativel com OpenAI). Ative so as que tiver.
 # OpenRouter: https://openrouter.ai/keys
 # OPENROUTER_API_KEY=sk-or-...
-# OPENROUTER_MODEL=google/gemma-4-31b-it:free
+# OPENROUTER_MODEL=nvidia/nemotron-3.5-super-vl:free
 # Mistral: https://console.mistral.ai/api-keys (plano Experiment pede telefone)
 # MISTRAL_API_KEY=...
 # MISTRAL_MODEL=ministral-8b-2512

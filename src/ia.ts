@@ -303,7 +303,7 @@ const GROQ_MODELOS = [
 // OpenRouter: modelos ":free" com visao. Mistral: plano Experiment (pede
 // telefone). GitHub Models: PAT gratis com escopo models:read.
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const OPENROUTER_MODELO = 'google/gemma-4-31b-it:free';
+const OPENROUTER_MODELO = 'nvidia/nemotron-3.5-super-vl:free';
 const MISTRAL_URL = 'https://api.mistral.ai/v1/chat/completions';
 const MISTRAL_MODELO = 'ministral-8b-2512';
 const GITHUB_MODELS_URL = 'https://models.github.ai/inference/chat/completions';

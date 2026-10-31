@@ -29,7 +29,7 @@ Ative so as que voce tiver chave. Nenhuma pede cartao.
 npx wrangler secret put OPENROUTER_API_KEY
 ```
 
-Modelo padrao: `google/gemma-4-31b-it:free`. Para trocar:
+Modelo padrao: `nvidia/nemotron-3.5-super-vl:free`. Para trocar:
 
 ```
 npx wrangler secret put OPENROUTER_MODEL
