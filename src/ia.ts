@@ -31,13 +31,22 @@ export class IaFalha extends Error {
   }
 }
 
-// Modelo de visao do Workers AI. Aceita imagem e segue instrucao em ingles
-// com mais firmeza que o llava; o prompt continua em PT-BR e funciona.
-const MODELO_VISAO = '@cf/meta/llama-3.2-11b-vision-instruct';
+// Modelos de visao do Workers AI. O Llama 3.2 11B e o mais barato em
+// neuronios; o Mistral Small 3.1 entra como reserva quando o primeiro nao
+// devolve JSON. Ambos aceitam data URL no formato messages/image_url.
+const MODELOS_VISAO = [
+  '@cf/meta/llama-3.2-11b-vision-instruct',
+  '@cf/mistralai/mistral-small-3.1-24b-instruct',
+];
+
+type ConteudoVisao =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: { url: string } };
 
 // Analise pelo Workers AI: manda ate 3 quadros e pede o JSON do coach.
-// Modelos de visao pequenos nao aceitam varias imagens de forma uniforme,
-// entao tentamos o array e caimos para o primeiro quadro se a API recusar.
+// O campo antigo "image" esta marcado como deprecated no catalogo e falhava
+// com array de base64; o formato atual e messages + image_url com data URL.
+// Se um modelo recusar varias imagens, tenta de novo com o primeiro quadro.
 async function analisarComWorkersAi(
   env: Bindings,
   quadros: string[],
@@ -45,33 +54,45 @@ async function analisarComWorkersAi(
 ): Promise<AnaliseCoach> {
   if (!env.AI) throw new IaFalha(0, 'binding AI ausente');
 
-  const base64 = quadros.slice(0, 3).map((q) => q.slice(q.indexOf(',') + 1));
-  const prompt = `${systemPrompt}\n\nResponda SOMENTE com o JSON, sem texto fora dele.`;
+  const falhas: string[] = [];
+  const quantidades = [...new Set([Math.min(3, quadros.length), 1])];
 
-  let resposta: unknown;
-  try {
-    resposta = await env.AI.run(MODELO_VISAO as never, {
-      image: base64,
-      prompt,
-      max_tokens: 1200,
-    } as never);
-  } catch {
-    resposta = await env.AI.run(MODELO_VISAO as never, {
-      image: base64[0],
-      prompt,
-      max_tokens: 1200,
-    } as never);
+  for (const modelo of MODELOS_VISAO) {
+    for (const quantos of quantidades) {
+      const conteudo: ConteudoVisao[] = [
+        { type: 'text', text: 'Estes sao os momentos do treino, em ordem. Analise.' },
+        ...quadros.slice(0, quantos).map(
+          (q): ConteudoVisao => ({ type: 'image_url', image_url: { url: q } }),
+        ),
+      ];
+
+      try {
+        const resposta = await env.AI.run(modelo as never, {
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: conteudo },
+          ],
+          max_tokens: 1400,
+          temperature: 0,
+        } as never);
+
+        const obj = resposta as { response?: string; description?: string } | string;
+        const texto =
+          typeof obj === 'string' ? obj : (obj?.response ?? obj?.description ?? '');
+        const json = extrairJSON(texto);
+        if (json) return normalizar(json);
+        falhas.push(`${modelo} (${quantos} img): respondeu sem JSON`);
+      } catch (e) {
+        falhas.push(
+          `${modelo} (${quantos} img): ${
+            e instanceof Error ? e.message.slice(0, 100) : 'falha'
+          }`,
+        );
+      }
+    }
   }
 
-  const obj = resposta as { response?: string; description?: string } | string;
-  const texto =
-    typeof obj === 'string' ? obj : (obj?.response ?? obj?.description ?? '');
-
-  const json = extrairJSON(texto);
-  if (!json) {
-    throw new IaFalha(0, `Workers AI respondeu sem JSON: ${String(texto).slice(0, 140)}`);
-  }
-  return normalizar(json);
+  throw new IaFalha(0, `Workers AI: ${falhas.slice(0, 3).join(' | ')}`);
 }
 
 // Lista os modelos que esta chave do Groq pode usar. Foi assim que o erro
