@@ -102,13 +102,13 @@ export function PaginaPlanos({
                   )
                 ) : !user ? (
                   <a class="btn btn-pri btn-largo" href="/cadastro">Criar conta para assinar</a>
+                ) : eAtual ? (
+                  <span class="embreve">Plano ativo</span>
                 ) : !mpAtivo ? (
                   <form method="post" action={`/planos/simular/${p.id}`}>
                     <input type="hidden" name="csrf" value={csrf} />
                     <button class="btn btn-pri btn-largo" type="submit">Assinar {p.nome} (simulado)</button>
                   </form>
-                ) : eAtual ? (
-                  <span class="embreve">Plano ativo</span>
                 ) : (
                   <form method="post" action={`/planos/${p.id}/assinar`}>
                     <input type="hidden" name="csrf" value={csrf} />
@@ -121,7 +121,9 @@ export function PaginaPlanos({
         </div>
 
         <p style="color:var(--cinza);font-size:.9rem;margin-top:24px">
-          Pagamento por PIX ou cartao, via Mercado Pago. Cancele quando quiser.
+          {mpAtivo
+            ? 'Pagamento por PIX ou cartao, via Mercado Pago. Cancele quando quiser.'
+            : 'Modo de teste: a assinatura e simulada e nao cobra nada. Use para experimentar os planos.'}
           {gratis ? ' O plano Gratis nao pede cartao.' : ''}
         </p>
       </section>

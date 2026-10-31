@@ -98,7 +98,7 @@ rotasPlanos.post('/:id/assinar', async (c) => {
 
 // Quando nao ha token do Mercado Pago, oferece um pagamento SIMULADO para
 // testar o fluxo completo (assinatura ativa = videos_por_mes=20 no Atleta).
-rotasPlanos.get('/simular/:id', async (c) => {
+rotasPlanos.post('/simular/:id', async (c) => {
   const user = c.get('user');
   if (!user) return c.redirect('/entrar?msg=sessao');
 
@@ -175,7 +175,7 @@ rotasPlanos.post('/simular/:id/confirmar', async (c) => {
     .bind(user.id, planoId, `simulado-${Date.now()}`, renova)
     .run();
 
-  return c.redirect('/planos?msg=pago');
+  return c.redirect('/planos?msg=simulado');
 });
 
 export const rotasWebhooks = new Hono<{ Bindings: Bindings; Variables: Vars }>();

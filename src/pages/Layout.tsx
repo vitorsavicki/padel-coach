@@ -96,6 +96,7 @@ const TEXTOS_MSG: Record<string, string> = {
   limite: 'Voce chegou ao limite de analises do seu plano neste mes. Veja os planos para analisar mais.',
   mp_off: 'O pagamento ainda esta em finalizacao. Voltamos em breve com a assinatura.',
   pago: 'Pagamento aprovado! Sua assinatura esta ativa.',
+  simulado: 'Plano ativado em modo de teste, sem cobranca. Voce pode trocar de plano quando quiser.',
   pendente: 'Pagamento em processamento. A assinatura ativa assim que o Mercado Pago confirmar.',
   falhou: 'Nao conseguimos concluir o pagamento. Tente de novo.',
   plano_invalido: 'Esse plano nao esta disponivel.',
