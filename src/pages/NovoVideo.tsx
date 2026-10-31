@@ -39,6 +39,8 @@ const CSS_NOVO = `
 .etapas li::before{content:'';flex:none;width:8px;height:8px;border-radius:50%;background:#cfe2da}
 .etapas li.feito::before,.etapas li.atual::before{background:var(--quadra)}
 .etapas li.atual::before{box-shadow:0 0 0 3px rgba(15,118,110,.18)}
+.barra.wait span{animation:pulsar 1.5s infinite ease-in-out}
+@keyframes pulsar{0%{opacity:.6}50%{opacity:1}100%{opacity:.6}}
 `;
 
 // Roda no navegador. Le o arquivo local, extrai 6 quadros e envia so as
@@ -73,7 +75,7 @@ const SCRIPT = `
       v.onloadedmetadata=function(){
         var dur=v.duration||0;
         if(!dur||!isFinite(dur)){URL.revokeObjectURL(url);reject(new Error('duracao'));return;}
-        var total=6,largura=480,c=document.createElement('canvas'),ctx=c.getContext('2d'),out=[],i=0;
+        var total=4,largura=480,c=document.createElement('canvas'),ctx=c.getContext('2d'),out=[],i=0;
         function passo(){
           if(i>=total){URL.revokeObjectURL(url);resolve(out);return;}
           var t=dur*(0.08+0.84*(i/(total-1)));
@@ -103,14 +105,41 @@ const SCRIPT = `
     if(palco){palco.className='palco on';}
     humor('analisando');marcar(0);progresso(6);
     dizer('Abrindo o video aqui no seu aparelho...');
+    var progressoAtual=6;
+    var msgTimer=null;
+    var barraSpan=document.getElementById('barra');
+    var mensagensEspera=[
+      'Extraindo os melhores momentos do seu treino...',
+      'O coach esta assistindo aos seus golpes...',
+      'Escrevendo sua analise pessoal...',
+      'Quase pronto, so mais um instante...',
+    ];
+    var msgIdx=0;
+    function proxMsg(){
+      msgIdx=(msgIdx+1)%mensagensEspera.length;
+      dizer(mensagensEspera[msgIdx]);
+    }
+    function iniciarEspera(){
+      if(barraSpan){barraSpan.classList.add('wait');}
+      msgTimer=setInterval(function(){
+        progressoAtual=Math.min(75,progressoAtual+3);
+        progresso(progressoAtual);
+        proxMsg();
+      }, 15000);
+    }
+    function pararEspera(){
+      if(msgTimer){clearInterval(msgTimer);msgTimer=null;}
+      if(barraSpan){barraSpan.classList.remove('wait');}
+    }
     ler(f).then(function(lista){
       hid.value=JSON.stringify(lista);
-      marcar(1);progresso(55);
+      marcar(1);progresso(55);progressoAtual=55;
       dizer('Enviando as imagens para o coach...');
       var fd=new FormData(form);
       return fetch('/videos/novo',{method:'POST',body:fd,headers:{'x-async':'1'},credentials:'same-origin'});
     }).then(function(r){return r.json();}).then(function(j){
-      marcar(2);progresso(80);
+      pararEspera();
+      marcar(2);progresso(80);progressoAtual=80;
       dizer('O coach esta analisando seu posicionamento...');
       if(j&&j.ok&&j.id){
         progresso(100);marcar(3);humor('feliz');
@@ -122,6 +151,7 @@ const SCRIPT = `
         dizer((j&&j.msg)?j.msg:'Nao conseguimos analisar agora. Tente de novo em alguns minutos.');
       }
     }).catch(function(){
+      pararEspera();
       humor('triste');
       if(btn){btn.disabled=false;btn.textContent='Tentar de novo';}
       dizer('Nao consegui ler esse video. Tente outro arquivo mp4 ou mov.');
@@ -221,11 +251,11 @@ export function PaginaNovoVideo({
           <h3>Limites do video</h3>
           <ul>
             <li><strong>Tempo: ate 2 minutos</strong> por treino. De 30 segundos a 2 minutos ja da uma analise completa.</li>
-            <li><strong>Tamanho: ate 100MB</strong> por arquivo. O video nao e enviado para o Google - o coach recebe so 6 imagens de momentos, menos de 300KB.</li>
+            <li><strong>Tamanho: ate 100MB</strong> por arquivo. O video nao e enviado para o Google - o coach recebe so 4 imagens de momentos, menos de 300KB.</li>
             <li><strong>Analises: 2 por mes</strong> no plano Gratis (20 no Atleta, ilimitado no Pro).</li>
           </ul>
           <p>
-            Por que tao curto? Com 6 momentos o coach avalia tecnica e posicionamento
+            Por que tao curto? Com 4 momentos o coach avalia tecnica e posicionamento
             sem gastar a cota gratuita do Google em um jogo inteiro. Se o video for
             maior que 2 minutos, o proprio site usa apenas os momentos principais.
           </p>

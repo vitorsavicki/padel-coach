@@ -432,6 +432,13 @@ export function dicaParaErro(motivo: string): string | null {
 
 function baseGemini(configurado?: string): string {
   const padrao = 'https://generativelanguage.googleapis.com/v1beta';
+  // TAREFA 3 (investigacao do Gemini): o endpoint padrao acima esta correto.
+  // O /saude/ia/gerar aborta em ~20s quando:
+  //  - IA_API_KEY nao esta definida ou nao tem a Generative Language API habilitada
+  //  - IA_MODEL nao existe na conta (ex: aposentado) -> 404 ao gerar
+  //  - IA_BASE_URL aponta para endpoint invalido
+  // Sem essas chaves, o site segue com Groq (1o) + Workers AI (2o), que seguram o site.
+  // Para testar fora do Worker: curl -X POST https://generativelanguage.googleapis.com/v1beta/models/IA_MODEL:generateContent -H 'x-goog-api-key: IA_API_KEY'
   if (!configurado) return padrao;
   if (!configurado.startsWith('https://')) return padrao;
   if (!configurado.includes('googleapis.com')) return padrao;

@@ -83,8 +83,7 @@ rotasVideos.post('/novo', async (c) => {
   const titulo = String(corpo['titulo'] ?? '').trim().slice(0, 80) || 'Treino sem titulo';
 
   const limite = await podeAnalisar(c.env.DB, user!.id);
-  // LIMITE DESLIGADO PARA TESTES. Para religar, troque por: if (!limite.ok) {
-  if (false && !limite.ok) {
+  if (!limite.ok) {
     return json
       ? c.json({ ok: false, msg: 'Voce chegou ao limite de analises do seu plano neste mes.' })
       : c.redirect('/videos/novo?msg=limite');

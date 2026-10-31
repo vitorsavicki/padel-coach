@@ -12,7 +12,7 @@ export const CSS_BASE = `
   --raio:16px;
 }
 *{box-sizing:border-box;margin:0}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;overflow-x:hidden}
 body{font-family:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--tinta);background:var(--fundo);line-height:1.55;-webkit-font-smoothing:antialiased}
 a{color:inherit}
 .wrap{max-width:1040px;margin:0 auto;padding:0 20px}
@@ -67,6 +67,9 @@ footer{border-top:1px solid var(--borda);margin-top:56px;background:#fff}
   .topo nav a{font-size:.86rem}
   .pagina{padding:32px 16px 48px}
   .sec{padding:40px 0}
+  .btn{min-height:48px}
+  .form{max-width:100%;width:100%}
+  .campo input{min-height:48px;font-size:1rem}
 }
 `;
 
