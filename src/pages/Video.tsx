@@ -5,7 +5,9 @@ import type { VideoRow, AnaliseRow } from '../routes/videos';
 import { dicaParaErro } from '../ia';
 
 const CSS_VIDEO = `
-.topo-analise{display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;margin:8px 0 4px}
+.topo-analise{display:flex;align-items:flex-start;justify-content:center;gap:18px;flex-wrap:wrap;margin:8px 0 4px}
+.mascote-fala{flex:1;max-width:420px;font-size:1rem;color:var(--tinta);line-height:1.5}
+.mascote-fala p{margin:0 0 8px}
 .nota-caixa{text-align:center}
 .nota-caixa .num{font-size:4.6rem;line-height:.9;font-weight:800;color:var(--quadra);letter-spacing:-.05em}
 .nota-caixa .de{font-size:.95rem;color:var(--cinza);font-weight:600;margin-top:2px}
@@ -76,6 +78,16 @@ function etiquetaNota(nota: number): string {
   return 'Para treinar';
 }
 
+function falaDoMascote(nota: number, humor: Humor): string {
+  if (nota >= 7) {
+    return 'Otimo! O coach gostou do que viu. Voce esta no caminho certo - confira abaixo o que vai bem e o que treinar na semana.';
+  }
+  if (nota >= 5) {
+    return 'Voce esta na media. Tem pontos fortes para manter e outros para melhorar - veja o feedback do coach abaixo.';
+  }
+  return 'Nao desanime! Todo mundo comeca assim. O coach apontou o que treinar primeiro - confira abaixo e volte em breve.';
+}
+
 export function PaginaVideo({
   user,
   video,
@@ -116,6 +128,7 @@ export function PaginaVideo({
           <>
             <div class="topo-analise">
               <Mascote humor={humor} size={110} />
+              <p class="mascote-fala">{falaDoMascote(nota, humor)}</p>
               <div class="nota-caixa">
                 <div class="num">{nota.toFixed(1)}</div>
                 <div class="de">de 10</div>
