@@ -87,7 +87,7 @@ rotasAuth.post('/entrar', limiteAuth, async (c) => {
 rotasAuth.get('/sair', async (c) => {
   await encerrarSessao(c.env.DB, c.get('sessionId'));
   limparCookieSessao(c);
-  return c.redirect('/?msg=saiu');
+  return c.redirect('/');
 });
 
 export { exigirLogin };
