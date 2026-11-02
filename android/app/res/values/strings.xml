@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Padel Coach IA</string>
+    <string name="url_inicial" translatable="false">https://SEU-SITE.workers.dev/</string>
+    <string name="host_app" translatable="false">SEU-SITE.workers.dev</string>
+
+    <string name="erro_titulo">Não foi possível carregar</string>
+    <string name="erro_texto">Verifique sua internet e tente de novo.\n\nO app precisa de conexão para carregar suas análises de treino e o painel.</string>
+    <string name="erro_tentar">Tentar novamente</string>
+    <string name="erro_navegador">Abrir no navegador</string>
+    <string name="arquivo_escolher">Escolher arquivo</string>
+    <string name="link_indisponivel">Não há app para abrir este link.</string>
+    <string name="js_confirmar">Confirmar</string>
+    <string name="js_ok">OK</string>
+    <string name="js_cancelar">Cancelar</string>
+</resources>

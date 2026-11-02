@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="marca">#0f766e</color>
+    <color name="marca_escura">#0a4f4a</color>
+    <color name="tinta">#0a1f1a</color>
+    <color name="cinza">#5b716b</color>
+    <color name="branco">#FFFFFF</color>
+    <color name="fundo">#FFFFFF</color>
+    <color name="bola">#d9f24a</color>
+</resources>

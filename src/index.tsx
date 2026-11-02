@@ -5,6 +5,7 @@ import type { Bindings } from './lib/bindings';
 import { rotasAuth } from './routes/auth';
 import { rotasVideos } from './routes/videos';
 import { rotasPlanos, rotasWebhooks } from './routes/planos';
+import rotasAndroid from './routes/android';
 import { Home } from './pages/Home';
 import { Dashboard } from './pages/Dashboard';
 import { PaginaPrivacidade } from './pages/Privacidade';
@@ -132,6 +133,7 @@ app.route('/', rotasAuth);
 app.route('/videos', rotasVideos);
 app.route('/planos', rotasPlanos);
 app.route('/webhooks', rotasWebhooks);
+app.route('/', rotasAndroid);
 
 app.get('/painel', async (c) => {
   const user = c.get('user');

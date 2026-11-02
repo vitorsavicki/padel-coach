@@ -2,7 +2,9 @@
   "name": "padel-coach",
   "main": "src/index.tsx",
   "compatibility_date": "2025-10-01",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "d1_databases": [
     {
       "binding": "DB",
@@ -11,8 +13,14 @@
     }
   ],
   "r2_buckets": [],
-  "ai": { "binding": "AI" },
+  "ai": {
+    "binding": "AI"
+  },
   "vars": {
     "APP_NAME": "Padel Coach IA"
+  },
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
   }
 }

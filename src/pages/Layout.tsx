@@ -1,4 +1,4 @@
-import type { Child } from 'hono/jsx';
+﻿import type { Child } from 'hono/jsx';
 import type { User } from '../lib/session';
 
 // Identidade visual: quadra de padel (verde-teal), bola amarela e areia clara.
@@ -71,6 +71,42 @@ footer{border-top:1px solid var(--borda);margin-top:56px;background:#fff}
   .form{max-width:100%;width:100%}
   .campo input{min-height:48px;font-size:1rem}
 }
+.eyebrow{display:inline-block;background:var(--bola);color:var(--quadra-esc);font-weight:800;font-size:.78rem;padding:5px 12px;border-radius:999px;letter-spacing:.02em}
+.btn-grande{padding:15px 28px;font-size:1.05rem}
+.lista-check{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:8px}
+.lista-check li{padding-left:26px;position:relative;color:var(--cinza)}
+.lista-check li:before{content:"✓";position:absolute;left:0;color:var(--quadra);font-weight:800}
+.app-hero{display:grid;grid-template-columns:1.2fr .8fr;gap:36px;align-items:center;padding:44px 0 8px}
+.app-hero h1{font-size:2.2rem;margin:12px 0 14px;letter-spacing:-.02em}
+.app-hero__linha{color:var(--cinza);font-size:1.08rem;max-width:520px}
+.app-hero__acoes{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:22px 0 6px}
+.app-hero__meta{color:var(--cinza);font-size:.9rem}
+.app-hero__arte{display:flex;justify-content:center}
+.app-phone{width:210px;border-radius:28px;border:3px solid var(--tinta);background:var(--tinta);padding:10px;box-shadow:0 24px 40px -24px rgba(10,31,26,.45)}
+.app-phone__tela{background:var(--fundo);border-radius:20px;padding:26px 16px;display:grid;justify-items:center;gap:8px;text-align:center}
+.app-phone__tela strong{font-size:1rem}
+.app-phone__tela small{color:var(--cinza)}
+.app-phone__botao{margin-top:8px;background:var(--quadra);color:#fff;font-weight:700;font-size:.85rem;padding:8px 18px;border-radius:10px}
+.app-grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:36px 0}
+.app-passo{position:relative;padding-top:30px}
+.app-passo__numero{position:absolute;top:-14px;left:20px;width:32px;height:32px;border-radius:50%;background:var(--bola);color:var(--quadra-esc);font-weight:800;display:flex;align-items:center;justify-content:center}
+.app-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.cartao{background:var(--papel);border:1px solid var(--borda);border-radius:16px;padding:22px;box-shadow:0 1px 2px rgba(10,31,26,.04)}
+.cartao h2{font-size:1.15rem;margin-bottom:6px}
+.cartao--dica{background:linear-gradient(180deg,#f2fbf3,#fff)}
+.auxiliar{color:var(--cinza);font-size:.93rem}
+.app-aviso{display:flex;gap:16px;align-items:flex-start;background:#fff8e1;border:1px solid #ecd27a;border-radius:14px;padding:18px 20px;margin-bottom:24px}
+.app-aviso h2{font-size:1.05rem;margin-bottom:4px}
+.app-aviso p{color:#7a5a00;font-size:.93rem;margin:0}
+.app-aviso__icone{font-size:1.6rem}
+.app-detalhes{margin-bottom:16px}
+.app-detalhes summary{cursor:pointer;font-weight:700}
+.detalhes{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:14px 0}
+.detalhes dt{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--cinza)}
+.detalhes dd{margin:2px 0 0;font-weight:600}
+.app-hash{display:grid;gap:4px;font-size:.85rem;color:var(--cinza);word-break:break-all}
+.app-hash code{background:var(--fundo);padding:8px 10px;border-radius:8px;font-size:.78rem}
+@media (max-width:720px){.app-hero{grid-template-columns:1fr}.app-cols{grid-template-columns:1fr}}
 `;
 
 const TEXTOS_MSG: Record<string, string> = {
