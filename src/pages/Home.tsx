@@ -269,6 +269,9 @@ export function Home({ user, msg }: { user: User | null; msg?: string }) {
                   <p>Um treino pratico, com series e foco, para a sua proxima ida a quadra.</p>
                 </div>
               </div>
+              <p style="text-align:center;margin-top:20px">
+                <a href="/exemplo" style="color:var(--quadra);font-weight:700;text-decoration:none">Ver uma analise de exemplo, com nota e feedback &rarr;</a>
+              </p>
             </div>
           </section>
 
@@ -285,7 +288,15 @@ export function Home({ user, msg }: { user: User | null; msg?: string }) {
                     <ul class="feats">
                       {p.feats.map((f) => <li>{f}</li>)}
                     </ul>
-                    <span class="embreve">Pagamento em breve</span>
+                    {p.nome === 'Gratis' ? (
+                      user ? (
+                        <a class="btn btn-sec btn-largo" href="/videos/novo">Enviar um video</a>
+                      ) : (
+                        <a class="btn btn-sec btn-largo" href="/cadastro">Criar conta gratis</a>
+                      )
+                    ) : (
+                      <a class="btn btn-pri btn-largo" href="/planos">Assinar {p.nome}</a>
+                    )}
                   </div>
                 ))}
               </div>
