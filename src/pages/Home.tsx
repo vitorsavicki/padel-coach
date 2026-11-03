@@ -275,6 +275,37 @@ export function Home({ user, msg }: { user: User | null; msg?: string }) {
             </div>
           </section>
 
+          <section class="sec" id="app" style="background:#fff;border-top:1px solid var(--borda);border-bottom:1px solid var(--borda)">
+            <div class="wrap app-hero" style="padding:0">
+              <div>
+                <span class="eyebrow">Novo</span>
+                <h2>O Padel Coach no seu celular</h2>
+                <p class="sub-sec" style="max-width:520px">
+                  Mesma conta, agora com icone na tela inicial. Analise treinos, veja a nota do
+                  coach e acompanhe sua evolucao de qualquer lugar.
+                </p>
+                <div class="app-hero__acoes">
+                  <a class="btn btn-pri" href="/app">Baixar o app Android</a>
+                  <span class="app-hero__meta">Gratis &middot; 37 KB &middot; Android 6.0+</span>
+                </div>
+                <ul class="lista-check">
+                  <li>Sem anuncios e sem compras dentro do app</li>
+                  <li>Abre direto nos seus treinos</li>
+                </ul>
+              </div>
+              <div class="app-hero__arte">
+                <div class="app-phone">
+                  <div class="app-phone__tela">
+                    <img src="/img/app-icon-512.png" alt="Icone do app Padel Coach" width="72" height="72" style="border-radius:18px" />
+                    <strong>Padel Coach IA</strong>
+                    <small>Seu treino, analisado</small>
+                    <span class="app-phone__botao">Abrir</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <section class="sec" id="planos">
             <div class="wrap">
               <h2>Planos para cada momento</h2>
@@ -314,9 +345,6 @@ export function Home({ user, msg }: { user: User | null; msg?: string }) {
               <a class="btn btn-pri" href={user ? '/videos/novo' : '/cadastro'}>
                 {user ? 'Enviar video' : 'Criar conta gratis'}
               </a>
-              <p style="margin:16px 0 0;font-size:.88rem">
-                <a href="/app" style="color:#d3ece5">Tambem para Android: baixe o app gratis</a>
-              </p>
             </div>
           </section>
         </>
