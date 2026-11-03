@@ -222,12 +222,9 @@ export function PaginaNovoVideo({
 
         {!iaAtiva ? (
           <div class="setup">
-            <strong>A analise ainda nao esta ligada.</strong>
-            Falta a chave do Google (gratis, sem cartao). No terminal do projeto:
-            <code>npx wrangler secret put IA_API_KEY</code>
-            <code>npx wrangler secret put IA_MODEL</code>
-            Depois <code style="display:inline;padding:2px 6px">npx wrangler deploy</code>.
-            Enquanto isso, veja uma <a href="/exemplo">analise de exemplo</a>.
+            <strong>A analise esta em manutencao.</strong>
+            Voltamos em alguns minutos. Enquanto isso, veja uma{' '}
+            <a href="/exemplo">analise de exemplo</a>.
           </div>
         ) : null}
 
@@ -287,7 +284,7 @@ export function PaginaNovoVideo({
           </details>
           <details class="duvida">
             <summary>Preciso instalar algum aplicativo?</summary>
-            <p>Nao. E so abrir o site no navegador do celular, escolher o video e esperar. Nada para baixar.</p>
+            <p>Nao e obrigatorio: o site funciona no navegador do celular. Se preferir, tem um <a href="/app">app gratis para Android</a>, leve e sem anuncios.</p>
           </details>
           <details class="duvida">
             <summary>Quanto tempo leva a analise?</summary>

@@ -227,6 +227,7 @@ export function Layout({ titulo, descricao, user, corpo, children, cssExtra }: P
             <div>
               <h4>Produto</h4>
               <ul>
+                <li><a href="/app">App Android</a></li>
                 <li><a href="/exemplo">Ver exemplo</a></li>
                 <li><a href="/planos">Planos</a></li>
                 <li><a href="/videos/novo">Enviar video</a></li>

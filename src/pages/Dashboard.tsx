@@ -159,7 +159,7 @@ export function Dashboard({
             <span class="valor">{analisados}</span>
           </div>
           <div class="bloco-num">
-            <span class="rotulo">Analises</span>
+            <span class="rotulo">No mes</span>
             <span class="valor">{usadas ?? 0}</span>
           </div>
           <div class="bloco-num">

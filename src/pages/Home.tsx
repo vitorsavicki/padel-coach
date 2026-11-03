@@ -314,6 +314,9 @@ export function Home({ user, msg }: { user: User | null; msg?: string }) {
               <a class="btn btn-pri" href={user ? '/videos/novo' : '/cadastro'}>
                 {user ? 'Enviar video' : 'Criar conta gratis'}
               </a>
+              <p style="margin:16px 0 0;font-size:.88rem">
+                <a href="/app" style="color:#d3ece5">Tambem para Android: baixe o app gratis</a>
+              </p>
             </div>
           </section>
         </>
