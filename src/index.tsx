@@ -5,6 +5,7 @@ import type { Bindings } from './lib/bindings';
 import { rotasAuth } from './routes/auth';
 import { rotasVideos } from './routes/videos';
 import { rotasPlanos, rotasWebhooks } from './routes/planos';
+import { rotasPerfil } from './routes/perfil';
 import rotasAndroid from './routes/android';
 import { Home } from './pages/Home';
 import { Dashboard } from './pages/Dashboard';
@@ -132,6 +133,7 @@ app.get('/', (c) => c.html(<Home user={c.get('user')} msg={c.req.query('msg')} /
 app.route('/', rotasAuth);
 app.route('/videos', rotasVideos);
 app.route('/planos', rotasPlanos);
+app.route('/perfil', rotasPerfil);
 app.route('/webhooks', rotasWebhooks);
 app.route('/', rotasAndroid);
 

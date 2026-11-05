@@ -12,13 +12,13 @@ export interface ApkInfo {
 }
 
 export const APK: ApkInfo = {
-  versao: '1.0.0',
-  versionCode: 1,
-  arquivo: '/download/padel-coach-1.0.0.apk',
+  versao: '1.0.1',
+  versionCode: 2,
+  arquivo: '/download/padel-coach-1.0.1.apk',
   arquivoEstavel: '/download/padel-coach.apk',
-  bytes: 37846,
-  sha256: '7401c5be4a4c965cf111264ab83b65284f4c69e8a10e17c805268719ce51f554',
-  geradoEm: '2026-11-02',
+  bytes: 37845,
+  sha256: '411b5c976e4b4a093b5c0e9516aa19d3ce6edac8095d6c33be2bc93274d0c99d',
+  geradoEm: '2026-11-03',
   minSdk: 23,
   targetSdk: 34,
 };

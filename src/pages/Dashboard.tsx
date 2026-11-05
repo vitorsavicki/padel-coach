@@ -9,6 +9,8 @@ const CSS_DASH = `
 .painel-topo{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:26px}
 .painel-topo h1{font-size:1.9rem;letter-spacing:-.02em;margin:0 0 4px}
 .painel-topo p{margin:0;color:var(--cinza);font-size:.98rem}
+.saudacao{display:flex;align-items:center;gap:12px;min-width:0}
+.saudacao .mascote{flex:none}
 
 .resumo{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px}
 .bloco-num{background:#fff;border:1px solid var(--borda);border-radius:16px;padding:18px 16px;position:relative;overflow:hidden;box-shadow:var(--sombra-1)}
@@ -141,9 +143,12 @@ export function Dashboard({
     <Layout titulo="Meus treinos - Padel Coach IA" user={user} cssExtra={CSS_DASH}>
       <section class="painel">
         <div class="painel-topo">
-          <div>
-            <h1>Oi, {user.nome.split(' ')[0]}!</h1>
-            <p>Seu progresso na quadra, treino a treino.</p>
+          <div class="saudacao">
+            <Mascote humor="feliz" size={64} />
+            <div>
+              <h1>Oi, {user.nome.split(' ')[0]}!</h1>
+              <p>Seu progresso na quadra, treino a treino.</p>
+            </div>
           </div>
           <a class="btn btn-pri" href="/videos/novo">+ Novo treino</a>
         </div>

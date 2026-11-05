@@ -280,7 +280,7 @@ export function PaginaNovoVideo({
           <h2>Duvidas de quem esta chegando agora</h2>
           <details class="duvida">
             <summary>Meu video fica guardado no site?</summary>
-            <p>Nao. O video e lido no seu proprio celular e nao e enviado. So as imagens de alguns momentos vao para o coach. Guardamos a nota e o feedback.</p>
+            <p>Nao. O video e lido no seu proprio celular e nao e enviado. So as 4 imagens dos momentos vao para o coach. Guardamos essas imagens e a analise, e voce pode apagar o treino quando quiser.</p>
           </details>
           <details class="duvida">
             <summary>Preciso instalar algum aplicativo?</summary>

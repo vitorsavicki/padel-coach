@@ -30,40 +30,42 @@ export function PaginaPrivacidade({
         <h2>O que guardamos</h2>
         <ul>
           <li><strong>Seu cadastro:</strong> nome, e-mail e uma senha protegida (nunca guardamos a senha em texto).</li>
-          <li><strong>Seus videos de treino:</strong> os arquivos que voce envia, para que a analise seja feita.</li>
+          <li><strong>As imagens dos momentos:</strong> o video nunca e enviado. O site le o arquivo no seu aparelho e manda so 4 imagens de momentos para a analise. Essas imagens ficam guardadas para voce rever o que o coach olhou.</li>
           <li><strong>As analises:</strong> nota, pontos fortes, pontos a melhorar e o treino sugerido.</li>
         </ul>
 
         <h2>Videos sao dados sensiveis</h2>
         <p>
-          Um video mostra seu rosto, sua quadra e sua rotina. Por isso: nunca registramos o conteudo
-          ou o endereco do video nos nossos logs, e voce pode apagar qualquer video na hora, sem
+          Um video mostra seu rosto, sua quadra e sua rotina. Por isso o arquivo do video nunca sai
+          do seu aparelho: so as 4 imagens dos momentos sao enviadas. Nunca registramos o conteudo
+          ou o endereco do video nos nossos logs, e voce pode apagar qualquer treino na hora, sem
           pedir autorizacao a ninguem.
         </p>
 
-        <h2>Quem ve seus videos</h2>
+        <h2>Quem ve seus dados</h2>
         <p>
-          Apenas voce e o servico de inteligencia artificial que faz a analise. Nao vendemos, nao
-          compartilhamos com anunciantes e nao usamos seu video para treinar modelos publicos.
+          Apenas voce e o servico de inteligencia artificial que faz a analise (e recebe as 4
+          imagens). Nao vendemos, nao compartilhamos com anunciantes e nao usamos suas imagens para
+          treinar modelos publicos.
         </p>
 
         <h2>Por quanto tempo</h2>
         <p>
-          Os videos ficam guardados enquanto sua conta existir. Se voce apagar um video ou a conta,
-          eles saem do armazenamento imediatamente, sem copia de seguranca separada.
+          As imagens dos momentos e a analise ficam guardadas enquanto voce nao apagar o treino ou a
+          conta. Apagar remove na hora, sem copia de seguranca separada.
         </p>
 
         <h2>Seus direitos (LGPD)</h2>
         <p>
           Voce pode ver, corrigir ou apagar seus dados quando quiser. Apagar a conta remove tudo:
-          cadastro, videos, analises e sessoes abertas.
+          cadastro, imagens dos treinos, analises e sessoes abertas.
         </p>
 
         {user ? (
           <div class="perigo">
-            <h2>Apagar minha conta e todos os videos</h2>
+            <h2>Apagar minha conta e todos os treinos</h2>
             <p>
-              Isso nao tem volta. Seus videos, analises e o cadastro sao removidos na hora.
+              Isso nao tem volta. Suas imagens de treino, analises e o cadastro sao removidos na hora.
               Escreva <strong>APAGAR</strong> para confirmar.
             </p>
             <form method="post" action="/conta/apagar" class="form" style="margin-top:14px">
@@ -73,7 +75,7 @@ export function PaginaPrivacidade({
                 <input name="confirmar" required placeholder="APAGAR" autocomplete="off" />
               </label>
               <button class="btn btn-pri btn-largo" type="submit"
-                onclick="return confirm('Apagar a conta e todos os videos? Nao tem como recuperar.')">
+                onclick="return confirm('Apagar a conta e todos os treinos? Nao tem como recuperar.')">
                 Apagar minha conta
               </button>
             </form>

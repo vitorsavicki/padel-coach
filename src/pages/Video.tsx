@@ -5,9 +5,25 @@ import type { VideoRow, AnaliseRow } from '../routes/videos';
 import { dicaParaErro } from '../ia';
 
 const CSS_VIDEO = `
-.topo-analise{display:flex;align-items:flex-start;justify-content:center;gap:18px;flex-wrap:wrap;margin:8px 0 4px}
-.mascote-fala{flex:1;max-width:420px;font-size:1rem;color:var(--tinta);line-height:1.5}
+.topo-analise{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:16px;align-items:center;margin:8px 0 4px}
+.mascote-avatar{display:flex;flex-direction:column;align-items:center;gap:2px;flex:none}
+.mascote-nome{font-size:.68rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--quadra-esc);opacity:.75}
+.mascote-balao{position:relative;background:#fff;border:1px solid var(--borda);border-radius:16px;padding:14px 18px;text-align:left;box-shadow:0 10px 24px rgba(10,31,26,.08);min-width:0}
+.mascote-balao::before{content:'';position:absolute;left:-7px;top:28px;width:13px;height:13px;background:#fff;border-left:1px solid var(--borda);border-bottom:1px solid var(--borda);transform:rotate(45deg)}
+.mascote-fala{font-size:1rem;color:var(--tinta);line-height:1.5;margin:0}
 .mascote-fala p{margin:0 0 8px}
+.mascote-controles{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:10px}
+.mascote-controles[hidden]{display:none}
+.mascote-contador{font-size:.78rem;font-weight:800;color:var(--cinza);min-width:54px;text-align:center}
+.lista li.destaque{background:#fff8e1;border-radius:10px;padding:6px 8px;margin-left:-8px;box-shadow:0 0 0 1px #f0d98a inset}
+@media (max-width:640px){
+  .topo-analise{grid-template-columns:1fr;gap:12px}
+  .mascote-balao::before{left:50%;top:-7px;transform:translateX(-50%) rotate(45deg);border-left:1px solid var(--borda);border-top:1px solid var(--borda);border-bottom:0;border-right:0}
+  .nota-caixa{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+  .nota-caixa .num{font-size:3rem}
+  .nota-caixa .de{margin:0}
+  .nota-caixa .etiqueta{margin:0}
+}
 .nota-caixa{text-align:center}
 .nota-caixa .num{font-size:4.6rem;line-height:.9;font-weight:800;color:var(--quadra);letter-spacing:-.05em}
 .nota-caixa .de{font-size:.95rem;color:var(--cinza);font-weight:600;margin-top:2px}
@@ -127,8 +143,19 @@ export function PaginaVideo({
         {analise ? (
           <>
             <div class="topo-analise">
-              <Mascote humor={humor} size={110} />
-              <p class="mascote-fala">{falaDoMascote(nota, humor)}</p>
+              <div class="mascote-avatar">
+                <Mascote humor={humor} size={110} />
+                <span class="mascote-nome">Professor Padel</span>
+              </div>
+              <div class="mascote-balao">
+                <p class="mascote-fala" id="mascote-fala" aria-live="polite">{falaDoMascote(nota, humor)}</p>
+                <div class="mascote-controles" id="mascote-controles" hidden>
+                  <button type="button" class="btn btn-sec btn-mini" id="mascote-anterior">Anterior</button>
+                  <span class="mascote-contador" id="mascote-contador">1 de 1</span>
+                  <button type="button" class="btn btn-sec btn-mini" id="mascote-proximo">Proximo</button>
+                  <button type="button" class="btn btn-pri btn-mini" id="mascote-ouvir">Ouvir</button>
+                </div>
+              </div>
               <div class="nota-caixa">
                 <div class="num">{nota.toFixed(1)}</div>
                 <div class="de">de 10</div>
@@ -159,8 +186,52 @@ export function PaginaVideo({
 
             <div class="card bloco melhorar">
               <h3><span class="marca" /> O que melhorar</h3>
-              <ul class="lista">{melhorar.map((p) => <li>{p}</li>)}</ul>
+              <ul class="lista" id="lista-melhorar">
+                {melhorar.map((p, i) => <li data-ponto={i}>{p}</li>)}
+              </ul>
             </div>
+
+            <script dangerouslySetInnerHTML={{ __html: `
+(function(){
+  var lista = document.getElementById('lista-melhorar');
+  if (!lista) return;
+  var itens = Array.prototype.slice.call(lista.querySelectorAll('li'));
+  if (!itens.length) return;
+  var falas = itens.map(function(li){ return li.textContent.trim(); });
+  var indice = 0;
+  var fala = document.getElementById('mascote-fala');
+  var controles = document.getElementById('mascote-controles');
+  var contador = document.getElementById('mascote-contador');
+  var anterior = document.getElementById('mascote-anterior');
+  var proximo = document.getElementById('mascote-proximo');
+  var ouvir = document.getElementById('mascote-ouvir');
+  if (!fala || !controles || !contador || !anterior || !proximo || !ouvir) return;
+  controles.hidden = false;
+  function mostra(){
+    fala.textContent = 'Ponto ' + (indice + 1) + ' de ' + falas.length + ': ' + falas[indice];
+    contador.textContent = (indice + 1) + ' de ' + falas.length;
+    anterior.disabled = indice === 0;
+    proximo.disabled = indice === falas.length - 1;
+    itens.forEach(function(li, n){ li.classList.toggle('destaque', n === indice); });
+  }
+  anterior.addEventListener('click', function(){ if (indice > 0) { indice -= 1; mostra(); } });
+  proximo.addEventListener('click', function(){ if (indice < falas.length - 1) { indice += 1; mostra(); } });
+  ouvir.addEventListener('click', function(){
+    if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
+      ouvir.textContent = 'Audio indisponivel';
+      setTimeout(function(){ ouvir.textContent = 'Ouvir'; }, 1800);
+      return;
+    }
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(falas[indice]);
+    u.lang = 'pt-BR';
+    u.rate = 1.02;
+    u.pitch = 1.05;
+    window.speechSynthesis.speak(u);
+  });
+  mostra();
+})();
+` }} />
 
             {analise.treino_sugerido ? (
               <div class="treino">
@@ -202,7 +273,7 @@ export function PaginaVideo({
         )}
 
         <p style="color:var(--cinza);font-size:.86rem;margin-top:26px;text-align:center">
-          Seu video nao fica guardado: ele nunca saiu do seu aparelho. Guardamos so a nota e o feedback.
+          Seu video nao fica guardado: ele nunca saiu do seu aparelho. Guardamos as 4 imagens dos momentos e o feedback, e voce pode apagar tudo aqui.
         </p>
 
         <div class="acoes">

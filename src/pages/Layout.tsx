@@ -126,12 +126,13 @@ const TEXTOS_MSG: Record<string, string> = {
   erro_ia: 'Nao conseguimos analisar agora. Tente de novo em alguns minutos.',
   processando: 'O coach ja esta assistindo esse video. Espere a analise terminar.',
   video_apagado: 'Video apagado.',
-  conta_apagada: 'Sua conta e todos os seus videos foram apagados.',
+  conta_apagada: 'Sua conta e todos os seus treinos foram apagados.',
   confirmar: 'Para apagar a conta, escreva APAGAR no campo de confirmacao.',
   limite: 'Voce chegou ao limite de analises do seu plano neste mes. Veja os planos para analisar mais.',
   mp_off: 'O pagamento ainda esta em finalizacao. Voltamos em breve com a assinatura.',
   pago: 'Pagamento aprovado! Sua assinatura esta ativa.',
   simulado: 'Plano ativado em modo de teste, sem cobranca. Voce pode trocar de plano quando quiser.',
+  perfil_salvo: 'Perfil salvo! O coach vai usar essas informacoes na proxima analise.',
   pendente: 'Pagamento em processamento. A assinatura ativa assim que o Mercado Pago confirmar.',
   falhou: 'Nao conseguimos concluir o pagamento. Tente de novo.',
   plano_invalido: 'Esse plano nao esta disponivel.',
@@ -203,6 +204,7 @@ export function Layout({ titulo, descricao, user, corpo, children, cssExtra }: P
                 <>
                   <a href="/painel">Meus treinos</a>
                   <a href="/videos/novo">Enviar video</a>
+                  <a href="/perfil">Perfil</a>
                   <a href="/planos">Planos</a>
                   <a href="/sair">Sair</a>
                 </>

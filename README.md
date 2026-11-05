@@ -12,9 +12,11 @@ celular; o video original nunca sobe.
 3. A IA analisa os quadros e responde no formato do coach: nota 0-10, resumo,
    pontos fortes, pontos a melhorar e treino sugerido.
 4. O painel mostra a evolucao das notas ao longo do tempo.
-5. Planos: Gratis (2 analises/mes) | Atleta R$19,90 (20) | Pro R$39,90
-   (ilimitado). Sem credencial de Mercado Pago, o fluxo de assinatura e
-   simulado.
+5. Em `/perfil`, o aluno informa mao, categoria, meta e prioridades. O coach
+   usa esses dados para calibrar a exigencia; tudo e opcional e fica por conta.
+6. Planos: Gratis (2 analises/mes) | Atleta R$19,90 (20) | Pro R$39,90
+   (ilimitado). Sem credencial de Mercado Pago, a assinatura e simulada: o
+   botao abre uma confirmacao sem cobranca e a troca de plano funciona.
 
 ## Provedores de IA (todos gratis)
 

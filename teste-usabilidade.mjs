@@ -106,9 +106,36 @@ const csrf3 = pegaCsrf(pagEntrar.body);
 const rEntrar = await post('/entrar', { csrf: csrf3, email, senha });
 ok('Login reentra na conta', rEntrar.status === 302 && (rEntrar.loc || '').includes('/painel'), rEntrar.loc);
 
-// ---- 9. Planos, exemplo e privacidade ----
+// ---- 9. Perfil por conta ----
+const perfil = await get('/perfil');
+ok('Pagina de perfil abre', perfil.status === 200 && perfil.body.includes('Mao dominante'));
+const salvarPerfil = await post('/perfil', {
+  csrf: pegaCsrf(perfil.body),
+  mao: 'canhoto',
+  categoria: '5',
+  meta: 'Chegar a 4a categoria',
+  prioridades: 'Bandeja e posicionamento',
+});
+ok('Salvar perfil redireciona', salvarPerfil.status === 302 && (salvarPerfil.loc || '').includes('perfil_salvo'), salvarPerfil.loc);
+const perfilSalvo = await get('/perfil?msg=perfil_salvo');
+ok('Perfil salvo aparece no formulario', perfilSalvo.body.includes('Perfil salvo') && /value="canhoto" selected/.test(perfilSalvo.body));
+
+// ---- 10. Planos e assinatura simulada ----
 const planos = await get('/planos');
 ok('Pagina de planos abre', planos.status === 200 && /19,90/.test(planos.body));
+if (planos.body.includes('(simulado)')) {
+  const idPlano = planos.body.match(/\/planos\/simular\/(\d+)/)?.[1];
+  const abrirPlano = await post(`/planos/simular/${idPlano}`, { csrf: pegaCsrf(planos.body) });
+  ok('Assinatura simulada abre confirmacao', abrirPlano.status === 200 && abrirPlano.body.includes('Confirmar pagamento simulado'));
+  const confirmar = await post(`/planos/simular/${idPlano}/confirmar`, { csrf: pegaCsrf(abrirPlano.body) });
+  ok('Confirmar assinatura simulada', confirmar.status === 302 && (confirmar.loc || '').includes('msg=simulado'), confirmar.loc);
+  const planosDepois = await get('/planos');
+  ok('Plano simulado fica ativo', /Seu plano agora:<\/strong>\s*Atleta/.test(planosDepois.body));
+} else {
+  console.log('INFO - Mercado Pago ativo: fluxo simulado nao aparece, pulando assinatura de teste');
+}
+
+// ---- 11. Privacidade e exemplo ----
 const priv = await get('/privacidade');
 ok('Pagina de privacidade abre', priv.status === 200);
 const exem = await get('/exemplo');

@@ -4,6 +4,8 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT NOT NULL UNIQUE,
   senha_hash TEXT NOT NULL,
   nome TEXT NOT NULL,
+  -- Perfil tecnico opcional em JSON: mao, categoria, meta, prioridades.
+  perfil TEXT,
   criado_em TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE TABLE IF NOT EXISTS sessions (
@@ -30,10 +32,12 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 CREATE TABLE IF NOT EXISTS videos (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL REFERENCES users(id),
-  r2_key TEXT NOT NULL,            -- chave do objeto no R2
+  r2_key TEXT NOT NULL,            -- 'so-quadros' (o video nunca e enviado)
   titulo TEXT,                     -- 'Treino de saque 12/11'
   duracao_s INTEGER,
   status TEXT NOT NULL DEFAULT 'enviado', -- enviado|processando|analisado|erro
+  erro_motivo TEXT,                -- detalhe tecnico quando status = 'erro'
+  quadros TEXT,                    -- JSON array de data URLs (4 imagens do treino)
   enviado_em TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE TABLE IF NOT EXISTS analyses (
@@ -54,3 +58,8 @@ INSERT OR IGNORE INTO plans (id, nome, preco_centavos, videos_por_mes) VALUES
   (1, 'Grátis', 0, 2),
   (2, 'Atleta', 1990, 20),
   (3, 'Pro', 3990, 0);
+
+-- Bancos criados antes desta versao precisam das duas colunas abaixo
+-- (o CREATE TABLE IF NOT EXISTS nao altera tabela existente):
+-- ALTER TABLE videos ADD COLUMN erro_motivo TEXT;
+-- ALTER TABLE videos ADD COLUMN quadros TEXT;

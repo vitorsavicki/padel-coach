@@ -13,6 +13,8 @@ export type User = {
   id: number;
   email: string;
   nome: string;
+  // JSON com mao, categoria, meta e prioridades. Null = perfil nao informado.
+  perfil: string | null;
   criado_em: string;
 };
 
@@ -64,7 +66,7 @@ export const middlewareSessao = createMiddleware<{
   if (token && /^[0-9a-f]{64}$/.test(token)) {
     const row = await c.env.DB
       .prepare(
-        `SELECT s.id AS session_id, s.expira_em, u.id, u.email, u.nome, u.criado_em
+        `SELECT s.id AS session_id, s.expira_em, u.id, u.email, u.nome, u.perfil, u.criado_em
          FROM sessions s JOIN users u ON u.id = s.user_id
          WHERE s.id = ?`,
       )

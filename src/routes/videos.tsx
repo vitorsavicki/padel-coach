@@ -1,14 +1,60 @@
 import { Hono } from 'hono';
-import { exigirLogin, type Vars } from '../lib/session';
+import { exigirLogin, type User, type Vars } from '../lib/session';
 import { emitirTokenCsrf, csrfValido } from '../lib/csrf';
 import { analisarQuadros, quadrosValidos, iaConfigurada, dicaParaErro } from '../ia';
 import { podeAnalisar } from '../lib/plans';
+import { lerPerfil, perfilParaPrompt } from '../lib/perfil';
 import { COACH_SYSTEM_PROMPT } from '../prompt';
 import type { Bindings } from '../lib/bindings';
 import { PaginaNovoVideo } from '../pages/NovoVideo';
 import { PaginaVideo } from '../pages/Video';
 
 export const rotasVideos = new Hono<{ Bindings: Bindings; Variables: Vars }>();
+
+// Monta o system prompt do coach com contexto vivo: o perfil do jogador
+// (coluna users.perfil, editavel em /perfil) e o historico recente de
+// analises, para o coach comparar treinos e acompanhar a evolucao em vez de
+// analisar cada video no escuro. Sem perfil ou sem historico, o prompt base
+// continua valendo.
+async function montarPromptComContexto(env: Bindings, user: User): Promise<string> {
+  let prompt = COACH_SYSTEM_PROMPT;
+
+  // Perfil por conta: nome da conta + dados tecnicos que o aluno preencheu
+  // em /perfil. Nunca usar um perfil global, senao todo aluno vira a mesma
+  // pessoa e o coach inventa mao, categoria e meta.
+  prompt += `\n\nPERFIL DO JOGADOR\n${perfilParaPrompt(user.nome, lerPerfil(user.perfil))}`;
+
+  try {
+    const { results } = await env.DB.prepare(
+      `SELECT a.nota_geral, a.pontos_melhorar, v.enviado_em
+       FROM analyses a JOIN videos v ON v.id = a.video_id
+       WHERE a.user_id = ? AND v.status = 'analisado'
+       ORDER BY a.video_id DESC LIMIT 5`,
+    )
+      .bind(user.id)
+      .all<{ nota_geral: number; pontos_melhorar: string; enviado_em: string | null }>();
+    const linhas = (results ?? []).reverse().map((r) => {
+      const partes = String(r.enviado_em ?? '').slice(0, 10).split('-');
+      const data = partes.length === 3 ? `${partes[2]}/${partes[1]}` : 'sem data';
+      let problema = '';
+      try {
+        const arr = JSON.parse(r.pontos_melhorar);
+        if (Array.isArray(arr) && typeof arr[0] === 'string') {
+          problema = ` Melhorar: ${arr[0].slice(0, 140)}`;
+        }
+      } catch {
+        /* historico ilegivel nao quebra nada */
+      }
+      return `- ${data}: nota ${r.nota_geral}.${problema}`;
+    });
+    if (linhas.length > 0) {
+      prompt += `\n\nHISTORICO RECENTE DO JOGADOR (do mais antigo ao mais novo)\n${linhas.join('\n')}`;
+    }
+  } catch {
+    /* sem historico, o prompt base ja basta */
+  }
+  return prompt;
+}
 
 export type VideoRow = {
   id: number;
@@ -96,7 +142,8 @@ rotasVideos.post('/novo', async (c) => {
   const videoId = inserido.meta.last_row_id as number;
 
   try {
-    const analise = await analisarQuadros(c.env, quadros, COACH_SYSTEM_PROMPT);
+    const systemPrompt = await montarPromptComContexto(c.env, user!);
+    const analise = await analisarQuadros(c.env, quadros, systemPrompt);
 
     await c.env.DB.prepare('DELETE FROM analyses WHERE video_id = ?').bind(videoId).run();
     await c.env.DB

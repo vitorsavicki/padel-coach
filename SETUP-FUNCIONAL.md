@@ -95,7 +95,15 @@ npx wrangler secret put MP_ACCESS_TOKEN
 
 Webhook: `https://padel-coach.vitorsavicki.workers.dev/webhooks/mp`
 
-Sem o token, `/planos` usa a assinatura simulada.
+Sem o token, `/planos` usa a assinatura simulada: o botao "Assinar ...
+(simulado)" abre uma confirmacao sem cobranca, ativa o plano e deixa o aluno
+trocar de plano quando quiser.
+
+## 5. Perfil do jogador
+
+Em `/perfil`, cada conta informa mao dominante, categoria, meta e o que quer
+melhorar. O coach usa esses dados na proxima analise. Tudo e opcional. Nao
+existe mais perfil global em `wrangler.json`; o perfil e por conta.
 
 ## Por que nao tem R2
 

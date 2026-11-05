@@ -24,6 +24,9 @@ IA_MODEL=gemini-2.5-flash
 # GITHUB_MODELS_TOKEN=github_pat_...
 # GITHUB_MODEL=openai/gpt-4o
 
+# Perfil do jogador: agora e por conta, na pagina /perfil do site.
+# Nao existe mais variavel global de perfil.
+
 # Mercado Pago (opcional; sem isso /planos mostra "pagamento em breve")
 MP_ACCESS_TOKEN=token-do-mercado-pago
 

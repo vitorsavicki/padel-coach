@@ -1,8 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Padel Coach IA</string>
-    <string name="url_inicial" translatable="false">https://SEU-SITE.workers.dev/</string>
-    <string name="host_app" translatable="false">SEU-SITE.workers.dev</string>
+    <string name="url_inicial" translatable="false">https://padel-coach.vitorsavicki.workers.dev/</string>
+    <string name="host_app" translatable="false">padel-coach.vitorsavicki.workers.dev</string>
 
     <string name="erro_titulo">Não foi possível carregar</string>
     <string name="erro_texto">Verifique sua internet e tente de novo.\n\nO app precisa de conexão para carregar suas análises de treino e o painel.</string>

@@ -1,4 +1,4 @@
-// Analise do treino por QUADROS, nao pelo video inteiro.
+﻿// Analise do treino por QUADROS, nao pelo video inteiro.
 //
 // Video inline no Gemini e lento demais para uma requisicao sincrona: o
 // teste com um mp4 real levou 129s e voltou 524 (timeout de borda). O
@@ -72,7 +72,7 @@ async function analisarComWorkersAi(
             { role: 'system', content: systemPrompt },
             { role: 'user', content: conteudo },
           ],
-          max_tokens: 1400,
+          max_tokens: 2200,
           temperature: 0,
         } as never);
 
@@ -372,7 +372,7 @@ async function analisarComCompat(
       body: JSON.stringify({
         model: provedor.modelo,
         temperature: 0,
-        max_tokens: 1400,
+        max_tokens: 2200,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: conteudo },
@@ -475,7 +475,7 @@ async function analisarComGroq(
         body: JSON.stringify({
           model: modelo,
           temperature: 0,
-          max_tokens: 1400,
+          max_tokens: 2200,
           messages: [
             { role: 'system', content: systemPrompt },
             {
