@@ -273,7 +273,7 @@ export function PaginaVideo({
         )}
 
         <p style="color:var(--cinza);font-size:.86rem;margin-top:26px;text-align:center">
-          Seu video nao fica guardado: ele nunca saiu do seu aparelho. Guardamos as 4 imagens dos momentos e o feedback, e voce pode apagar tudo aqui.
+          Seu video nao fica guardado: ele nunca saiu do seu aparelho. Guardamos as 8 imagens dos momentos e o feedback, e voce pode apagar tudo aqui.
         </p>
 
         <div class="acoes">

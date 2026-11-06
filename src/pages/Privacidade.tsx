@@ -30,14 +30,14 @@ export function PaginaPrivacidade({
         <h2>O que guardamos</h2>
         <ul>
           <li><strong>Seu cadastro:</strong> nome, e-mail e uma senha protegida (nunca guardamos a senha em texto).</li>
-          <li><strong>As imagens dos momentos:</strong> o video nunca e enviado. O site le o arquivo no seu aparelho e manda so 4 imagens de momentos para a analise. Essas imagens ficam guardadas para voce rever o que o coach olhou.</li>
+          <li><strong>As imagens dos momentos:</strong> o video nunca e enviado. O site le o arquivo no seu aparelho e manda so 8 imagens de momentos para a analise. Essas imagens ficam guardadas para voce rever o que o coach olhou.</li>
           <li><strong>As analises:</strong> nota, pontos fortes, pontos a melhorar e o treino sugerido.</li>
         </ul>
 
         <h2>Videos sao dados sensiveis</h2>
         <p>
           Um video mostra seu rosto, sua quadra e sua rotina. Por isso o arquivo do video nunca sai
-          do seu aparelho: so as 4 imagens dos momentos sao enviadas. Nunca registramos o conteudo
+          do seu aparelho: so as 8 imagens dos momentos sao enviadas. Nunca registramos o conteudo
           ou o endereco do video nos nossos logs, e voce pode apagar qualquer treino na hora, sem
           pedir autorizacao a ninguem.
         </p>

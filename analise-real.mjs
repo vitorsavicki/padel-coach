@@ -1,9 +1,9 @@
-﻿// Teste de analise REAL: cria conta, sobe um video de padel de verdade,
+// Teste de analise REAL: cria conta, sobe um video de padel de verdade,
 // espera a IA e imprime a analise completa para avaliacao de qualidade.
 import puppeteer from 'puppeteer-core';
 
 const BASE = 'https://padel-coach.vitorsavicki.workers.dev';
-const VIDEO = process.argv[2] || process.env.TEMP + '\\padel-shots\\treino-real.webm';
+const VIDEO = process.argv[2] || process.env.TEMP + '\\padel-shots\\jogo-corte.webm';
 const email = `coach.${Date.now()}@zeta.test`;
 const senha = 'TesteZeta123';
 
@@ -36,7 +36,7 @@ console.log('cadastro ok:', p.url());
 await p.goto(BASE + '/videos/novo', { waitUntil: 'domcontentloaded' });
 const input = await p.$('input[type=file]');
 await input.uploadFile(VIDEO);
-await p.type('input[name=titulo]', 'Jogo Padel Nations Cup');
+await p.type('input[name=titulo]', 'Treino em quadra (corte)');
 console.log('enviando video (a IA pode levar ate 2 min)...');
 const t0 = Date.now();
 await p.click('button[type=submit]');

@@ -75,7 +75,7 @@ const SCRIPT = `
       v.onloadedmetadata=function(){
         var dur=v.duration||0;
         if(!dur||!isFinite(dur)){URL.revokeObjectURL(url);reject(new Error('duracao'));return;}
-        var total=4,largura=480,c=document.createElement('canvas'),ctx=c.getContext('2d'),out=[],i=0;
+        var total=8,largura=480,c=document.createElement('canvas'),ctx=c.getContext('2d'),out=[],i=0;
         function passo(){
           if(i>=total){URL.revokeObjectURL(url);resolve(out);return;}
           var t=dur*(0.08+0.84*(i/(total-1)));
@@ -248,11 +248,11 @@ export function PaginaNovoVideo({
           <h3>Limites do video</h3>
           <ul>
             <li><strong>Tempo: ate 2 minutos</strong> por treino. De 30 segundos a 2 minutos ja da uma analise completa.</li>
-            <li><strong>Tamanho: ate 100MB</strong> por arquivo. O video nao e enviado para o Google - o coach recebe so 4 imagens de momentos, menos de 300KB.</li>
+            <li><strong>Tamanho: ate 100MB</strong> por arquivo. O video nao e enviado para o Google - o coach recebe so 8 imagens de momentos, menos de 300KB.</li>
             <li><strong>Analises: 2 por mes</strong> no plano Gratis (20 no Atleta, ilimitado no Pro).</li>
           </ul>
           <p>
-            Por que tao curto? Com 4 momentos o coach avalia tecnica e posicionamento
+            Por que tao curto? Com 8 momentos o coach avalia tecnica e posicionamento
             sem gastar a cota gratuita do Google em um jogo inteiro. Se o video for
             maior que 2 minutos, o proprio site usa apenas os momentos principais.
           </p>
@@ -280,7 +280,7 @@ export function PaginaNovoVideo({
           <h2>Duvidas de quem esta chegando agora</h2>
           <details class="duvida">
             <summary>Meu video fica guardado no site?</summary>
-            <p>Nao. O video e lido no seu proprio celular e nao e enviado. So as 4 imagens dos momentos vao para o coach. Guardamos essas imagens e a analise, e voce pode apagar o treino quando quiser.</p>
+            <p>Nao. O video e lido no seu proprio celular e nao e enviado. So as 8 imagens dos momentos vao para o coach. Guardamos essas imagens e a analise, e voce pode apagar o treino quando quiser.</p>
           </details>
           <details class="duvida">
             <summary>Preciso instalar algum aplicativo?</summary>

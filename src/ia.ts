@@ -7,6 +7,7 @@
 // guardado no servidor.
 
 import type { Bindings } from './lib/bindings';
+import { PROMPT_OBSERVACAO_QUADRO } from './prompt';
 
 export type AnaliseCoach = {
   nota_geral: number;
@@ -513,7 +514,116 @@ async function analisarComGroq(
   throw new IaFalha(0, `Groq: ${ultimo}`);
 }
 
-export async function analisarQuadros(
+// Le UMA imagem por vez. A resposta e uma ficha de observacao, nao a analise
+// final: assim o modelo foca no que esta vendo naquele quadro em vez de
+// misturar tudo num resumo generico. Se o provedor falhar, devolve vazio e a
+// analise segue no modo antigo (todos os quadros de uma vez).
+async function observarQuadro(
+  env: Bindings,
+  quadro: string,
+  indice: number,
+  total: number,
+): Promise<string> {
+  const sistema = PROMPT_OBSERVACAO_QUADRO
+    .replaceAll('{QUADRO}', String(indice))
+    .replaceAll('{TOTAL}', String(total));
+  const pedido = `Este e o quadro ${indice} de ${total}. Registre apenas o que da para ver.`;
+
+  // Groq primeiro: e o provedor de visao mais forte da cadeia e responde
+  // rapido. So o primeiro modelo, para nao gastar 3 tentativas por quadro.
+  if (env.GROQ_API_KEY) {
+    const controlador = new AbortController();
+    const timer = setTimeout(() => controlador.abort(), 45_000);
+    try {
+      const r = await fetch(GROQ_URL, {
+        method: 'POST',
+        signal: controlador.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${chaveGroq(env)}`,
+        },
+        body: JSON.stringify({
+          model: GROQ_MODELOS[0],
+          temperature: 0,
+          max_tokens: 900,
+          messages: [
+            { role: 'system', content: sistema },
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: pedido },
+                { type: 'image_url', image_url: { url: quadro } },
+              ],
+            },
+          ],
+        }),
+      });
+      if (r.ok) {
+        const dados = (await r.json()) as {
+          choices?: Array<{ message?: { content?: string } }>;
+        };
+        const texto = dados.choices?.[0]?.message?.content ?? '';
+        if (texto.trim().length > 20) return texto.trim();
+      }
+    } catch {
+      // cai para o Workers AI
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  if (env.AI) {
+    for (const modelo of MODELOS_VISAO) {
+      try {
+        const resposta = await env.AI.run(modelo as never, {
+          messages: [
+            { role: 'system', content: sistema },
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: pedido },
+                { type: 'image_url', image_url: { url: quadro } },
+              ],
+            },
+          ],
+          max_tokens: 900,
+          temperature: 0,
+        } as never);
+        const obj = resposta as { response?: string; description?: string } | string;
+        const texto = typeof obj === 'string' ? obj : (obj?.response ?? obj?.description ?? '');
+        if (texto.trim().length > 20) return texto.trim();
+      } catch {
+        // tenta o proximo modelo
+      }
+    }
+  }
+
+  if (env.IA_API_KEY && env.IA_MODEL) {
+    try {
+      const virgula = quadro.indexOf(',');
+      const meta = quadro.slice(5, virgula);
+      const mime = meta.split(';')[0] || 'image/jpeg';
+      const partes = [
+        { inline_data: { mime_type: mime, data: quadro.slice(virgula + 1) } },
+      ];
+      const r = await chamarGemini(
+        env,
+        normalizarModelo(env.IA_MODEL),
+        partes,
+        sistema,
+        false,
+        pedido,
+      );
+      if (r.ok && r.texto.trim().length > 20) return r.texto.trim();
+    } catch {
+      // sem observacao; a analise final ainda pode rodar
+    }
+  }
+
+  return '';
+}
+
+async function analisarQuadrosDireto(
   env: Bindings,
   quadros: string[],
   systemPrompt: string,
@@ -625,19 +735,54 @@ export async function analisarQuadros(
   );
 }
 
+// Analise em duas etapas: olha cada quadro separadamente (em paralelo) e
+// depois sintetiza. E o jeito que o professor de verdade trabalha: primeiro
+// ve o que aconteceu em cada momento, depois junta o padrao. Se as leituras
+// falharem, cai no modo antigo para nao derrubar a analise.
+export async function analisarQuadros(
+  env: Bindings,
+  quadros: string[],
+  systemPrompt: string,
+): Promise<AnaliseCoach> {
+  if (MODO_DEMO_LOCAL) return analiseDemo(quadros.length);
+
+  const total = Math.min(quadros.length, 8);
+  if (total >= 2) {
+    const leituras = await Promise.allSettled(
+      quadros.slice(0, total).map((q, i) => observarQuadro(env, q, i + 1, total)),
+    );
+    const observacoes = leituras
+      .map((r, i) =>
+        r.status === 'fulfilled' && r.value ? `QUADRO ${i + 1}:\n${r.value}` : '',
+      )
+      .filter(Boolean);
+
+    if (observacoes.length >= Math.min(2, total)) {
+      const bloco = `OBSERVACOES QUADRO A QUADRO
+${observacoes.join('\n\n')}
+
+Use estas observacoes como base da analise final. Nao contradiga o que foi visto em cada quadro e nao invente o que nao aparece nelas. Se algum quadro nao tem observacao, diga que aquele momento nao deu para avaliar. Responda SOMENTE com o JSON de 5 chaves pedido acima.`;
+      return analisarQuadrosDireto(env, quadros, `${systemPrompt}\n\n${bloco}`);
+    }
+  }
+
+  return analisarQuadrosDireto(env, quadros, systemPrompt);
+}
+
 async function chamarGemini(
   env: Bindings,
   modelo: string,
   partes: Array<Record<string, unknown>>,
   systemPrompt: string,
   minimal = false,
+  instrucaoUsuario?: string,
 ): Promise<Tentativa> {
   const base = baseGemini(env.IA_BASE_URL);
   const url = `${base}/models/${modelo}:generateContent`;
 
-  const instrucao = minimal
+  const instrucao = instrucaoUsuario ?? (minimal
     ? `${systemPrompt}\n\nResponda SOMENTE com JSON valido no formato {"nota_geral":0-10,"resumo":"","pontos_fortes":[],"pontos_melhorar":[],"treino_sugerido":""}`
-    : 'Estes quadros sao de um treino de padel do aluno, em ordem. Analise.';
+    : 'Estes quadros sao de um treino de padel do aluno, em ordem. Analise.');
 
   const corpo: Record<string, unknown> = {
     contents: [{ role: 'user', parts: [{ text: instrucao }, ...partes] }],
